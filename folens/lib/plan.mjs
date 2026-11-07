@@ -12,25 +12,36 @@ export function baseDir(url) {
   return url.replace(/\/index\.html?([?#].*)?$/i, "/");
 }
 
-async function get(url, asJson = false, timeoutMs = 30000) {
-  const r = await fetch(url, {
-    signal: AbortSignal.timeout(timeoutMs),
-    headers: { "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/131.0 Safari/537.36" },
-  });
-  if (!r.ok) throw new Error(`HTTP ${r.status} ${url}`);
-  return asJson ? r.json() : r.text();
+// digital.folens.ie 会偶发返回 S3 NoSuchKey 404（同一 URL 立刻重试即 200），
+// 所以元数据请求必须带重试，否则整次采集会在 plan 阶段就失败。
+async function get(url, { asJson = false, timeoutMs = 30000, retries = 2 } = {}) {
+  let lastErr;
+  for (let i = 0; i <= retries; i++) {
+    try {
+      const r = await fetch(url, {
+        signal: AbortSignal.timeout(timeoutMs),
+        headers: { "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/131.0 Safari/537.36" },
+      });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return asJson ? await r.json() : await r.text();
+    } catch (e) {
+      lastErr = e;
+      if (i < retries) await new Promise((r) => setTimeout(r, 800 * (i + 1)));
+    }
+  }
+  throw new Error(`${url} → ${lastErr?.message}`);
 }
 
 /**
  * 3D Issue v9.5 静态出版物：
  *   files/data/bookinfo.json  → v040 总页数、v311c 标题、optimumDPI
- *   files/pages/svg/1.svg     → 页面 pt 尺寸（viewBox）
+ *   files/pages/svg/1.svg     → 页面 pt 尺寸（width/height）
  *   files/pages/large/<N>.jpg → 完整页图（背景 + 图形 + 文字，无需合成）
  *   files/pages/svg/<N>.svg   → 矢量文字副本（字形轮廓；叠加会与位图重影）
  */
 export async function plan3dIssue(bookUrl, { title: titleOverride, slug: slugOverride } = {}) {
   const base = baseDir(bookUrl);
-  const info = await get(base + "files/data/bookinfo.json", true);
+  const info = await get(base + "files/data/bookinfo.json", { asJson: true });
   const v = info?.v000?.v030 ?? {};
   const total = Number(v.v040);
   if (!Number.isFinite(total) || total < 1) throw new Error("bookinfo.json 读不到总页数 v040");
