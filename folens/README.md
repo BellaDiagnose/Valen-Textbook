@@ -2,7 +2,8 @@
 
 > 目标：给定 3D Issue v9.5 出版物的 `index.html`，自动**读取元数据 → 直采完整页图 →
 > 可选浏览器翻页存证 → 组装 PDF**。
-> 已验证：*Essential Science 2nd Edition*（digital.folens.ie），198 页。
+> 已验证：*Essential Science 2nd Edition*（198 页）、*Tout Va Bien ! 4th Edition*（218 页），
+> 均来自 digital.folens.ie。
 > 另一套引擎（FlippingBook）见 [`../flippingbook/README.md`](../flippingbook/README.md)。
 
 ## 与 FlippingBook 的本质差异
@@ -21,6 +22,8 @@
 
 **判定依据（隔离渲染实验）**：把 `svg/198.svg` 单独用 Chrome headless 渲染，得到的是
 纯文字 + 少量矢量图形，背景、照片、插图全部缺失；而 `large/198.jpg` 文字图形齐全。
+第二本书又复验了一次：`Tout Va Bien` 的 `svg/1.svg` 渲染出来**纯空白**，
+`large/1.jpg` 却是含照片、文字、版式的完整封面。
 所以**直采 large 图即最终页图**，不合成、不叠 SVG。这一点与 FlippingBook 恰好相反。
 
 ## 资源地图
@@ -35,6 +38,15 @@ files/pages/{tablet,smartphone,thumbs}/<N>.jpg   viewer 用的低档位
 
 `lib/plan.mjs` 负责读 `bookinfo.json` + 首页 SVG 的 pt 尺寸，生成 `largeUrl/svgUrl/...` 资源模板；
 `lib/capture.mjs` 负责直采、manifest、PDF 重组。
+
+**站点两个坑**：
+
+- CDN 会偶发返回 S3 `NoSuchKey` 404（同一 `index.html` / `bookinfo.json` 首次 404、立刻重试即 200）。
+  `plan.mjs` 的 `get()` 带 2 次重试；页图 `download()` 也带重试并校验 JPEG magic `FF D8`，
+  防止 365B 的 404 HTML 被当成页图存盘。
+- `baseDir()` 返回值**已带尾斜杠**，资源路径必须写 `${base}files/...`。
+  手工探测时若拼成 `${base}/files/...`（双斜杠），CloudFront 一律回 404，
+  很容易误判成"资源已下线" —— 先对照单/双斜杠两种请求再下结论。
 
 ## 使用
 
@@ -56,7 +68,22 @@ node agent.mjs --pages 1-5 --no-pdf              # 只存图
 不指定区间时默认采 `1..bookinfo.v040` 全书。
 
 直采链路：`fetch` + 45s 超时 + 2 次重试 + 校验 JPEG magic `FF D8`（防 404 HTML 混进页图），
-`--resume` 跳过已有页图，PDF 每次按 `out/pages/` 全量重组，并自动清理同名旧 PDF。
+`--resume` 跳过已有页图，PDF 每次按该 `--out` 下的 `pages/` 全量重组，并自动清理同名旧 PDF。
+
+### 多本书：每本独立 `--out`
+
+PDF 按 `--out` 目录的 `pages/` 全量重组，**两本书共用一个 out 会把页图混进同一本 PDF**。
+第二本起给独立目录（仓库 `.gitignore` 用 `**/out-*/` 忽略）：
+
+```bash
+URL=https://digital.folens.ie/sites/default/files/bulk_upload/ToutVaBien4thEd/TVB_TB_FLIPBOOK/index.html
+node agent.mjs --url "$URL" --out out-tout-va-bien --pages 1-3           # 试点
+node agent.mjs --url "$URL" --out out-tout-va-bien --resume --delay 800 --shots all
+PYTHON=<带 pymupdf 的解释器> ./scripts/verify.sh --out out-tout-va-bien
+```
+
+换书前先确认三件事：`bookinfo.json` 的 `v040` 与 `large/<v040+1>.jpg` 的 404 边界一致
+（本书 218 页、219 页 404）；首页 SVG 单独渲染不含页面内容；`large/1.jpg` 是完整封面。
 
 ### 分批慢速采集
 
@@ -83,46 +110,67 @@ FROM=1 TO=198 BATCH=20 DELAY=800 GAP=3 ./scripts/batch-run.sh
 ## 产出结构（全书完成态）
 
 ```
-out/
+out/                                        # Essential Science 2nd Edition
 ├── essential-science-2nd-edition_p1-p198.pdf   # 图像型 PDF
 ├── pages.json / quality.json / index.html       # manifest / 质量报告 / 全书总览
 ├── preview/render-001.png …                    # PDF 首/中/末页真实渲染存证
 ├── pages/page-0001.jpg … page-0198.jpg          # 198 张 1918×2713 完整页图
 ├── shots/spread-001.png … spread-100.png        # 浏览器翻页跨页截图
-├── vectors/                                     # 仅 --vectors 时生成
 └── capture.log / batch.log                      # 采集日志
+
+out-tout-va-bien/                           # Tout Va Bien ! 4th Edition（同结构）
+├── tout-va-bien-4th-edition_p1-p218.pdf
+├── pages.json / quality.json / index.html
+├── preview/render-001.png / -109 / -218
+├── pages/page-0001.jpg … page-0218.jpg
+├── shots/spread-001.png … spread-110.png
+└── capture.log
 ```
 
-## 完成态校验（198 页已跑完）
+## 完成态校验
+
+**Essential Science 2nd Edition（198 页）**
 
 | 项 | 结果 |
 |---|---|
 | 采集 | 一次直采 198 页，`--delay 800` + `--shots all`，11m27s，**零失败** |
 | 页图 | 198 张 1918×2713、无缺页；manifest 198 条；浏览器跨页截图 100 张无缺号（末页为单页跨页） |
 | PDF | 595×842pt，101.92 MB，198 个 Page 对象 / `Count 198` / xref + EOF 正常 |
-| 真实渲染 | PyMuPDF 逐页打开 198 页，每页都含图像对象且渲染成功；墨迹密度 std min 10.1 / median 36.5 / max 82.2，**低密度页 0**（无空白页、无丢内容页） |
+| 真实渲染 | PyMuPDF 逐页打开 198 页，每页都含图像对象且渲染成功；墨迹密度 std min 10.1 / median 36.5 / max 82.2，**低密度页 0** |
 | 抽查 | 封面、书内页 186（物理 198）、末页跨页截图、PDF 首/中/末渲染存证均清晰完整 |
+
+**Tout Va Bien ! 4th Edition（218 页）**
+
+| 项 | 结果 |
+|---|---|
+| 采集 | 试点 3 页后全书直采，`--delay 800` + `--shots all`，13m00s，exit 0，**零失败** |
+| 页图 | 218 张 1918×2713、无缺页；manifest 218 条；浏览器跨页截图 110 张无缺号 |
+| 元数据 | `v040=218` 与 `large/219.jpg` 返回 404 的边界一致；595×842pt / 232 DPI |
+| PDF | 595×842pt，113.97 MB，218 页；PyMuPDF 逐页打开全部含图像对象且渲染成功 |
+| 真实渲染 | 墨迹密度 std min 0.0 / p10 27.5 / median 39.1 / max 87.1，**低密度页仅第 2 页**（封面背面空白页，原书如此，已核对原图） |
+| 抽查 | 封面（照片/文字/版式完整）、书内第 109 页（法文正文、表格、题号清晰）、末页渲染存证均正常 |
 
 ## 复验
 
 ```bash
 python3 -m pip install pymupdf
-./scripts/verify.sh                # 等价于 python3 ../shared/verify.py --out out
+./scripts/verify.sh                                   # 第一本（--out out）
+./scripts/verify.sh --out out-tout-va-bien           # 第二本
 ```
 
 `shared/verify.py` 从 `pages.json` 自动推断 `provider=3dissue` / `offset=0` / `sequence`
 页码标签，零参数即可；`--pdf / --title / --provider / --offset / --page-label` 可显式覆盖。
-也可用 `PYTHON=<带 pymupdf 的解释器> ./scripts/verify.sh`。
+也可用 `PYTHON=<带 pymupdf 的解释器> ./scripts/verify.sh --out <目录>`。
 
 ## 代码结构
 
 ```
 agent.mjs               独立入口：CLI → captureBook
-lib/plan.mjs            bookinfo.json / SVG pt 尺寸 → 资源地图
+lib/plan.mjs            bookinfo.json / SVG pt 尺寸 → 资源地图（元数据请求带重试）
 lib/capture.mjs         直采、manifest、PDF 重组、可选 SVG 存档与浏览器存证
 lib/browser-pw.mjs      Playwright 驱动 viewer 的 next() 翻页截图
 scripts/batch-run.sh    分批直采驱动
-scripts/verify.sh       成品复验 wrapper
+scripts/verify.sh       成品复验 wrapper（--out 可覆盖）
 ../shared/pdf.mjs       JPEG→PDF 直嵌（两套引擎共用）
 ../shared/util.mjs      CLI / 区间 / 节流（两套引擎共用）
 ../shared/verify.py     成品复验（两套引擎共用）

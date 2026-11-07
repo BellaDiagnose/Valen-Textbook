@@ -1,14 +1,15 @@
 # Valen-Textbook
 
 两套**独立**的在线翻页电子书采集 agent：自动翻页 → 截图存证 → 保存高清页图 → 组装 PDF。
-已完整采集并复验两本书：
+已完整采集并复验三本书：
 
 | 出版物 | 引擎 | 模块 |
 |---|---|---|
 | *Linking Thinking 1 Textbook*（322 物理页 / 308 标签页） | FlippingBook Online 4.36 | [`flippingbook/`](flippingbook/README.md) |
 | *Essential Science 2nd Edition*（198 页） | 3D Issue v9.5（digital.folens.ie） | [`folens/`](folens/README.md) |
+| *Tout Va Bien ! 4th Edition*（218 页） | 3D Issue v9.5（digital.folens.ie） | [`folens/`](folens/README.md) |
 
-> **两份 PDF 都是图像型**：页面由 JPEG 直嵌，矢量文字层已光栅化进页图，因此文字清晰但
+> **三份 PDF 都是图像型**：页面由 JPEG 直嵌，矢量文字层已光栅化进页图，因此文字清晰但
 > **不可选中 / 不可搜索 / 不可复制**。本项目不叠加 OCR 文本层。
 
 ## 目录结构
@@ -33,8 +34,10 @@ Valen-Textbook/
     └── scripts/              batch-run.sh / verify.sh
 ```
 
-产物落在各自的 `out/`：`flippingbook/out/`（609 MB）、`folens/out/`（304 MB），
-均由 `.gitignore` 的 `**/out/` 忽略，**不入库**。代码仓库只提交 agent、脚本与文档。
+产物落在各自的 `out/`：`flippingbook/out/`（609 MB）、`folens/out/`（304 MB）；
+同一引擎的第二本书单独放 `folens/out-tout-va-bien/`（114 MB）。
+**每本书必须独立 `--out`** —— PDF 按该目录 `pages/` 全量重组，共用一个 out 会把两本页图混进同一本 PDF。
+这些目录由 `.gitignore` 的 `**/out/` / `**/out-*/` 忽略，**不入库**；代码仓库只提交 agent、脚本与文档。
 
 ## 两套引擎对照
 
@@ -70,6 +73,12 @@ cd ../folens
 node agent.mjs --pages 1-5 --shots 5          # 试点 + 浏览器翻页存证
 node agent.mjs --resume --delay 800 --shots all
 
+# 引擎 B 的第二本书：换 URL + 独立 out（避免页图混用）
+URL=https://digital.folens.ie/sites/default/files/bulk_upload/ToutVaBien4thEd/TVB_TB_FLIPBOOK/index.html
+node agent.mjs --url "$URL" --out out-tout-va-bien --pages 1-3
+node agent.mjs --url "$URL" --out out-tout-va-bien --resume --delay 800 --shots all
+./scripts/verify.sh --out out-tout-va-bien
+
 # 成品复验（需 python3 + pymupdf）
 python3 -m pip install pymupdf
 cd ../flippingbook && ./scripts/verify.sh
@@ -101,7 +110,8 @@ cd ../folens && ./scripts/verify.sh
   `/Users/...` 绝对路径，`NODE` 默认取 PATH 里的 `node`；
 - `agent-browser` CLI 由 `lib/browser.mjs` 逐级向上查找 `node_modules/.bin`（适配 workspaces 装在仓库根），
   也可用 `AGENT_BROWSER_BIN` 显式指定；Chromium 路径可用 `CHROME_PATH` 指定；
-- `shared/verify.py` 的 `--out` 相对当前工作目录，默认 `out`，并新增 `--provider` 显式覆盖。
+- `shared/verify.py` 的 `--out` 相对当前工作目录，默认 `out`，并新增 `--provider` 显式覆盖；
+- `folens/lib/plan.mjs` 的元数据请求带重试（folens CDN 会偶发 S3 `NoSuchKey` 404，重试即 200）。
 
 ## 已验证成品
 
@@ -109,8 +119,9 @@ cd ../folens && ./scripts/verify.sh
 |---|---|---|---|---|---|
 | Linking Thinking 1 | `flippingbook/out/linking-thinking-1_ph1-ph322.pdf` | 322 | 597×842pt / 131.51 MB | 322 张 1454×2050 | PyMuPDF 逐页渲染通过；仅物理页 2 为原书空白 |
 | Essential Science 2nd Ed | `folens/out/essential-science-2nd-edition_p1-p198.pdf` | 198 | 595×842pt / 101.92 MB | 198 张 1918×2713 | PyMuPDF 逐页渲染通过；低密度页 0 |
+| Tout Va Bien ! 4th Ed | `folens/out-tout-va-bien/tout-va-bien-4th-edition_p1-p218.pdf` | 218 | 595×842pt / 113.97 MB | 218 张 1918×2713 | PyMuPDF 逐页渲染通过；仅第 2 页为原书空白 |
 
-两本都附 `pages.json`（manifest）、`quality.json`、`index.html` 全书总览、`preview/render-*.png`
+三本都附 `pages.json`（manifest）、`quality.json`、`index.html` 全书总览、`preview/render-*.png`
 首/中/末页真实渲染存证。`quality.json` 现含 `provider` 字段，标明由哪套引擎产出。
 
 ## 共用件
