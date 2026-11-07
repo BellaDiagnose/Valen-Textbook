@@ -1,0 +1,14 @@
+{
+  "name": "valen-textbook",
+  "version": "1.0.0",
+  "private": true,
+  "description": "在线翻页电子书采集：FlippingBook 签名合成 + Folens / 3D Issue 静态直采",
+  "workspaces": [
+    "flippingbook",
+    "folens"
+  ],
+  "scripts": {
+    "verify:flippingbook": "python3 shared/verify.py --out flippingbook/out",
+    "verify:folens": "python3 shared/verify.py --out folens/out"
+  }
+}

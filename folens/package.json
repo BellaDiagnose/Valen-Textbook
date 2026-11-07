@@ -1,0 +1,17 @@
+{
+  "name": "@valen-textbook/folens",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Folens / 3D Issue v9.5 采集：静态 large 页图直采 + 可选浏览器翻页存证 + JPEG→PDF",
+  "bin": {
+    "folens-agent": "./agent.mjs"
+  },
+  "scripts": {
+    "capture": "node agent.mjs",
+    "verify": "bash scripts/verify.sh"
+  },
+  "dependencies": {
+    "playwright-core": "^1.65.0"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "@valen-textbook/flippingbook",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "FlippingBook Online 采集：CloudFront 签名发现 + substrate/vector 合成 + JPEG→PDF",
+  "bin": {
+    "flippingbook-agent": "./agent.mjs"
+  },
+  "scripts": {
+    "capture": "node agent.mjs",
+    "verify": "bash scripts/verify.sh"
+  },
+  "dependencies": {
+    "agent-browser": "^0.27.0"
+  }
+}
