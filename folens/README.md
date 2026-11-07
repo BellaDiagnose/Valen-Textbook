@@ -2,8 +2,8 @@
 
 > 目标：给定 3D Issue v9.5 出版物的 `index.html`，自动**读取元数据 → 直采完整页图 →
 > 可选浏览器翻页存证 → 组装 PDF**。
-> 已验证：*Essential Science 2nd Edition*（198 页）、*Tout Va Bien ! 4th Edition*（218 页），
-> 均来自 digital.folens.ie。
+> 已验证：*Essential Science 2nd Edition*（198 页）、*Tout Va Bien ! 4th Edition*（218 页）、
+> *Real World Geography 2nd Edition*（211 页），均来自 digital.folens.ie。
 > 另一套引擎（FlippingBook）见 [`../flippingbook/README.md`](../flippingbook/README.md)。
 
 ## 与 FlippingBook 的本质差异
@@ -22,9 +22,15 @@
 
 **判定依据（隔离渲染实验）**：把 `svg/198.svg` 单独用 Chrome headless 渲染，得到的是
 纯文字 + 少量矢量图形，背景、照片、插图全部缺失；而 `large/198.jpg` 文字图形齐全。
-第二本书又复验了一次：`Tout Va Bien` 的 `svg/1.svg` 渲染出来**纯空白**，
-`large/1.jpg` 却是含照片、文字、版式的完整封面。
-所以**直采 large 图即最终页图**，不合成、不叠 SVG。这一点与 FlippingBook 恰好相反。
+后两本又各复验一次，结果说明**同引擎不同出版物的 SVG 内容并不一致**：
+
+| 书 | `svg/1.svg` 单独渲染 | `large/1.jpg` |
+|---|---|---|
+| Tout Va Bien ! 4th Ed | **纯空白** | 含照片、文字、版式的完整封面 |
+| Real World Geography 2nd Ed | 仅书名 / 副标题文字（背景照片、出版社 logo、作者名全缺） | 含闪电/北极熊/上海天际线/火山照片、作者名、FOLENS logo 的完整封面 |
+
+所以**直采 large 图即最终页图**，不合成、不叠 SVG。判定依据是「SVG 缺背景/照片，large 完整」，
+不要假设 SVG 一定空白或一定有内容。这一点与 FlippingBook 恰好相反。
 
 ## 资源地图
 
@@ -73,17 +79,22 @@ node agent.mjs --pages 1-5 --no-pdf              # 只存图
 ### 多本书：每本独立 `--out`
 
 PDF 按 `--out` 目录的 `pages/` 全量重组，**两本书共用一个 out 会把页图混进同一本 PDF**。
-第二本起给独立目录（仓库 `.gitignore` 用 `**/out-*/` 忽略）：
+第二本起给独立目录（仓库 `.gitignore` 用 `**/out-*/` 忽略）。已验证的三本：
 
 ```bash
-URL=https://digital.folens.ie/sites/default/files/bulk_upload/ToutVaBien4thEd/TVB_TB_FLIPBOOK/index.html
-node agent.mjs --url "$URL" --out out-tout-va-bien --pages 1-3           # 试点
-node agent.mjs --url "$URL" --out out-tout-va-bien --resume --delay 800 --shots all
-PYTHON=<带 pymupdf 的解释器> ./scripts/verify.sh --out out-tout-va-bien
+# 任选一行赋给 URL / OUT（默认第一本；其余两本用注释中的值）
+URL=https://digital.folens.ie/sites/default/files/bulk_upload/EssentialScience2ndEd/ES_TB_EBOOK/index.html   OUT=out
+# URL=https://digital.folens.ie/sites/default/files/bulk_upload/ToutVaBien4thEd/TVB_TB_FLIPBOOK/index.html   OUT=out-tout-va-bien
+# URL=https://digital.folens.ie/sites/default/files/bulk_upload/RealWorldGeography2ndEd/RWG2_TB_Flipbook/index.html  OUT=out-real-world-geography
+
+node agent.mjs --url "$URL" --out "$OUT" --pages 1-3                       # 试点
+node agent.mjs --url "$URL" --out "$OUT" --resume --delay 800 --shots all   # 全书
+PYTHON=<带 pymupdf 的解释器> ./scripts/verify.sh --out "$OUT"
 ```
 
 换书前先确认三件事：`bookinfo.json` 的 `v040` 与 `large/<v040+1>.jpg` 的 404 边界一致
-（本书 218 页、219 页 404）；首页 SVG 单独渲染不含页面内容；`large/1.jpg` 是完整封面。
+（198/199、218/219、211/212 三组已核对）；首页 SVG 单独渲染不含完整页面内容；
+`large/1.jpg` 是完整封面。
 
 ### 分批慢速采集
 
@@ -125,6 +136,14 @@ out-tout-va-bien/                           # Tout Va Bien ! 4th Edition（同�
 ├── pages/page-0001.jpg … page-0218.jpg
 ├── shots/spread-001.png … spread-110.png
 └── capture.log
+
+out-real-world-geography/                   # Real World Geography 2nd Edition（同结构）
+├── real-world-geography-2nd-edition_p1-p211.pdf
+├── pages.json / quality.json / index.html
+├── preview/render-001.png / -106 / -211
+├── pages/page-0001.jpg … page-0211.jpg
+├── shots/spread-001.png … spread-107.png
+└── capture.log
 ```
 
 ## 完成态校验
@@ -150,12 +169,24 @@ out-tout-va-bien/                           # Tout Va Bien ! 4th Edition（同�
 | 真实渲染 | 墨迹密度 std min 0.0 / p10 27.5 / median 39.1 / max 87.1，**低密度页仅第 2 页**（封面背面空白页，原书如此，已核对原图） |
 | 抽查 | 封面（照片/文字/版式完整）、书内第 109 页（法文正文、表格、题号清晰）、末页渲染存证均正常 |
 
+**Real World Geography 2nd Edition（211 页）**
+
+| 项 | 结果 |
+|---|---|
+| 采集 | 试点 3 页后全书直采，`--delay 800` + `--shots all`，11m23s，exit 0，**零失败** |
+| 页图 | 211 张 1918×2713、无缺页；manifest 211 条；浏览器跨页截图 107 张 |
+| 元数据 | `v040=211` 与 `large/212.jpg` 返回 404 的边界一致；595×842pt / 232 DPI |
+| PDF | 595×842pt，122.11 MB，211 页；PyMuPDF 逐页打开全部含图像对象且渲染成功 |
+| 真实渲染 | 墨迹密度 std min 10.6 / p10 25.3 / median 45.1 / max 91.5，**低密度页 0** |
+| 抽查 | 第 106 页（Ordnance Survey / Map Scale 章节、彩色地图表格与插图）、末页（CBA My Geography report）均清晰完整 |
+
 ## 复验
 
 ```bash
 python3 -m pip install pymupdf
 ./scripts/verify.sh                                   # 第一本（--out out）
 ./scripts/verify.sh --out out-tout-va-bien           # 第二本
+./scripts/verify.sh --out out-real-world-geography   # 第三本
 ```
 
 `shared/verify.py` 从 `pages.json` 自动推断 `provider=3dissue` / `offset=0` / `sequence`
