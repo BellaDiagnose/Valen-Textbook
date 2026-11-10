@@ -2,8 +2,9 @@
 
 > 目标：给定 3D Issue 出版物的 `index.html`，自动**读取元数据 → 直采完整页图 →
 > 可选浏览器翻页存证 → 组装 PDF**。
-> 已验证五本，均来自 digital.folens.ie：*Essential Science 2nd Edition*（198 页）、
+> 已验证六本，均来自 digital.folens.ie：*Essential Science 2nd Edition*（198 页）、
 > *Tout Va Bien ! 4th Edition*（218 页）、*Real World Geography 2nd Edition*（211 页，以上 v9.5）、
+> *Starlight 3rd Class Combined Reading and Skills Book*（100 页）、
 > *Starlight 4th Class Combined Reading and Skills Book*（100 页）、
 > *Starlight 5th Class Combined Reading and Skills Book*（100 页，以上 v9.2）。
 > 另两套引擎见 [`../flippingbook/README.md`](../flippingbook/README.md) 与
@@ -31,6 +32,7 @@
 |---|---|---|
 | Tout Va Bien ! 4th Ed | **纯空白** | 含照片、文字、版式的完整封面 |
 | Real World Geography 2nd Ed | 仅书名 / 副标题文字（背景照片、出版社 logo、作者名全缺） | 含闪电/北极熊/上海天际线/火山照片、作者名、FOLENS logo 的完整封面 |
+| Starlight 3rd Class（v9.2） | 仅 Folens、系列副标题、书名文字（`svg/1.svg` 含 2 个 `<image>` 标签，隔离渲染仍无背景/照片/插画） | 完整橙色封面，含年级、书名、四幅插画与 FOLENS logo |
 | Starlight 4th / 5th Class（v9.2） | 仅 Folens、系列副标题、书名文字（紫色/绿色背景、Starlight logo、四幅插画全缺） | 完整的紫色 / 绿色封面，含年级、书名、插画与 FOLENS logo |
 
 所以**直采 large 图即最终页图**，不合成、不叠 SVG。判定依据是「SVG 缺背景/照片，large 完整」，
@@ -41,8 +43,8 @@
 ```
 files/data/bookinfo.json     v000.v030.v040 = 总页数、v311c = 标题、optimumDPI
 files/pages/svg/1.svg        width/height pt → PDF MediaBox
-                             v9.5: 595×842pt @232DPI；v9.2: 538×736 / 537×736pt @262DPI
-files/pages/large/<N>.jpg    完整页图（v9.5 实测 1918×2713；v9.2 尺寸不统一，见下）
+                             v9.5: 595×842pt @232DPI；v9.2: 547×736 / 538×736 / 537×736pt @262DPI
+files/pages/large/<N>.jpg    完整页图（v9.5 实测 1918×2713；v9.2 多数页统一、仅封面可能异类，见下）
 files/pages/svg/<N>.svg      文字层副本（<symbol> 字形 + <use> + data URI 小图，自包含）
 files/pages/{tablet,smartphone,thumbs}/<N>.jpg   viewer 用的低档位
 ```
@@ -59,11 +61,13 @@ files/pages/{tablet,smartphone,thumbs}/<N>.jpg   viewer 用的低档位
   手工探测时若拼成 `${base}/files/...`（双斜杠），CloudFront 一律回 404，
   很容易误判成"资源已下线" —— 先对照单/双斜杠两种请求再下结论。
 - **v9.2（Starlight）标题是占位符**：`index.html` 的 `<title>` 与 `v311c` 都是 `PUBLICATION`，
-  不显式给 `--title / --slug`，两本会撞同一个 `publication` slug、PDF 互相覆盖。
-- **v9.2 页图尺寸不统一**：同一本内 1119×1533（低分辨率封面）到 1959×2680 都有。
+  不显式给 `--title / --slug`，三本会撞同一个 `publication` slug、PDF 互相覆盖。
+- **v9.2 页图尺寸：每本最多一张异类，别概括成「都不统一」**：SL_03 的 100 张全部
+  1958×2678；SL_04 是 99 张 1958×2678 + 封面 1959×2680；SL_05 是 99 张 1955×2678 +
+  封面 1119×1533（低分辨率封面）。异类只出现在 `page-0001.jpg`。
   `shared/pdf.mjs` 对每张 JPEG 解析 SOF 尺寸后等比居中适配统一 MediaBox，所以不影响成册；
-  `quality.json` 的 `page_image_size` 只记录第一张页图的尺寸。
-- v9.2 两本的 `large/2.jpg` 都是同一张 31541B 纯白页（原书封面背面空白，非采集失败），
+  `quality.json` 的 `page_image_size` 只记录第一张页图的尺寸（恰好是那张异类）。
+- v9.2 三本的 `large/2.jpg` 都是同一张 31541B 纯白页（原书封面背面空白，非采集失败），
   `verify.py` 的低密度页会列出第 2 页。
 
 ## 使用
@@ -91,13 +95,14 @@ node agent.mjs --pages 1-5 --no-pdf              # 只存图
 ### 多本书：每本独立 `--out`
 
 PDF 按 `--out` 目录的 `pages/` 全量重组，**两本书共用一个 out 会把页图混进同一本 PDF**。
-五本各用独立目录（仓库 `.gitignore` 用 `**/out-*/` 忽略），第一本也不再用裸 `out/`：
+六本各用独立目录（仓库 `.gitignore` 用 `**/out-*/` 忽略），第一本也不再用裸 `out/`：
 
 ```bash
-# 任选一行赋给 URL / OUT（默认第一本；其余四本用注释中的值）
+# 任选一行赋给 URL / OUT（默认第一本；其余五本用注释中的值）
 URL=https://digital.folens.ie/sites/default/files/bulk_upload/EssentialScience2ndEd/ES_TB_EBOOK/index.html   OUT=out-essential-science-2nd
 # URL=https://digital.folens.ie/sites/default/files/bulk_upload/ToutVaBien4thEd/TVB_TB_FLIPBOOK/index.html   OUT=out-tout-va-bien
 # URL=https://digital.folens.ie/sites/default/files/bulk_upload/RealWorldGeography2ndEd/RWG2_TB_Flipbook/index.html  OUT=out-real-world-geography
+# URL=https://digital.folens.ie/sites/default/files/bulk_upload/Starlight/SL_03_EBOOK/index.html              OUT=out-starlight-3rd-class
 # URL=https://digital.folens.ie/sites/default/files/bulk_upload/Starlight/SL_04_EBOOK/index.html              OUT=out-starlight-4th-class
 # URL=https://digital.folens.ie/sites/default/files/bulk_upload/Starlight/SL_05_EBOOK/index.html              OUT=out-starlight-5th-class
 
@@ -106,11 +111,11 @@ node agent.mjs --url "$URL" --out "$OUT" --resume --delay 800 --shots all   # �
 PYTHON=<带 pymupdf 的解释器> ./scripts/verify.sh --out "$OUT"
 ```
 
-Starlight 两本还要补 `--title "Starlight 4th Class Combined Reading and Skills Book"`
-/ `--slug starlight-4th-class`（5th 同理），否则标题与文件名都会变成 `PUBLICATION` / `publication`。
+Starlight 三本还要补 `--title "Starlight 3rd Class Combined Reading and Skills Book"`
+/ `--slug starlight-3rd-class`（4th / 5th 同理），否则标题与文件名都会变成 `PUBLICATION` / `publication`。
 
 换书前先确认三件事：`bookinfo.json` 的 `v040` 与 `large/<v040+1>.jpg` 的 404 边界一致
-（198/199、218/219、211/212、100/101 四组已核对）；首页 SVG 单独渲染不含完整页面内容；
+（198/199、218/219、211/212、100/101，六本已核对）；首页 SVG 单独渲染不含完整页面内容；
 `large/1.jpg` 是完整封面。
 
 ### 分批慢速采集
@@ -153,6 +158,13 @@ out-tout-va-bien/                           # Tout Va Bien ! 4th Edition（同�
 out-real-world-geography/                   # Real World Geography 2nd Edition（同结构）
 ├── real-world-geography-2nd-edition_p1-p211.pdf
 ├── pages/ 211 张、shots/ 107 张、preview/render-001/-106/-211
+
+out-starlight-3rd-class/                    # Starlight 3rd Class（v9.2）
+├── starlight-3rd-class_p1-p100.pdf
+├── pages.json / quality.json / index.html
+├── preview/render-001.png / -050 / -100
+├── pages/page-0001.jpg … page-0100.jpg      # 100 张 1958×2678，尺寸全统一
+└── shots/spread-001.png … spread-051.png
 
 out-starlight-4th-class/                    # Starlight 4th Class（v9.2）
 ├── starlight-4th-class_p1-p100.pdf
@@ -201,6 +213,18 @@ out-starlight-5th-class/                    # Starlight 5th Class（v9.2，同�
 | 真实渲染 | 墨迹密度 std min 10.6 / p10 25.3 / median 45.1 / max 91.5，**低密度页 0** |
 | 抽查 | 第 106 页（彩色地图与表格）、末页均清晰完整 |
 
+**Starlight 3rd Class Combined Reading and Skills Book（100 页，v9.2）**
+
+| 项 | 结果 |
+|---|---|
+| 采集 | 一次全书直采，`--delay 800`，3m36s，exit 0，**零失败**；另跑 `--shots all` 补 51 张跨页存证 |
+| 页图 | 100 张 **1958×2678 尺寸全统一**（v9.2 里第一本没有尺寸异类）、无缺页；manifest 100 条 |
+| 元数据 | `v040=100` 与 `large/101.jpg` 404 一致；547×736pt / 262 DPI；`v311c` 为占位符 `PUBLICATION`，用 `--title / --slug` 覆盖 |
+| 策略复核 | `svg/1.svg` 含 2 个 `<image>` 标签，Chrome headless 隔离渲染仍只有 Folens / 副标题 / 书名文字，背景与四幅插画全缺 → 直采 large、不叠 SVG |
+| PDF | 547×736pt，43.76 MB，100 页；PyMuPDF 逐页打开全部含图像对象且渲染成功，`get_text()` 为空（图像型） |
+| 真实渲染 | 墨迹密度 std min 0.0 / p10 33.5 / median 44.1 / p90 68.9 / max 94.3，**低密度页仅第 2 页**（31541B 纯白页，原书空白） |
+| 抽查 | 第 50 页（4b Brothers in the Library 课文与彩色插图）清晰完整 |
+
 **Starlight 4th Class Combined Reading and Skills Book（100 页，v9.2）**
 
 | 项 | 结果 |
@@ -229,8 +253,9 @@ python3 -m pip install pymupdf
 ./scripts/verify.sh                                   # 第一本（默认 --out out-essential-science-2nd）
 ./scripts/verify.sh --out out-tout-va-bien           # 第二本
 ./scripts/verify.sh --out out-real-world-geography   # 第三本
-./scripts/verify.sh --out out-starlight-4th-class    # 第四本（v9.2）
-./scripts/verify.sh --out out-starlight-5th-class    # 第五本（v9.2）
+./scripts/verify.sh --out out-starlight-3rd-class    # 第四本（v9.2）
+./scripts/verify.sh --out out-starlight-4th-class    # 第五本（v9.2）
+./scripts/verify.sh --out out-starlight-5th-class    # 第六本（v9.2）
 ```
 
 `shared/verify.py` 从 `pages.json` 自动推断 `provider=3dissue` / `offset=0` / `sequence`
