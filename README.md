@@ -142,3 +142,17 @@ cd ../folens && ./scripts/verify.sh
 
 只做图像型 PDF：不做 OCR、不加可搜索文本层、不做压缩分享版。
 需要可搜索文本时，须对页图另跑 OCR 并叠加文本层（当前未做，也不在仓库范围内）。
+
+### 已评估但不纳入自动采集的平台
+
+| 平台 | 只读探测结论 | 不纳入原因 | 合规替代 |
+|---|---|---|---|
+| Issuu — `issuu.com/edcoireland/docs/touchstones`（*Touchstones*，288 页，2022-03-11，publisher `edcoireland`） | 匿名 GET 200、无登录页、内嵌 `isDocumentGated:false`；但页面 `download` / `print` / `save` 入口均为 0，`robots.txt` 被平台边缘层拒绝 | 发布者只开放「在线阅读」，未开放下载；批量抓阅读器页图重组整本 PDF，等于把只读内容变成离线整本复制，改变了发布方设定的分发方式；平台也未给出允许自动抓取的信号 | 用自有 Issuu 账号登录后在授权范围内使用平台官方下载；权利方/机构从 Issuu 后台导出原始 PDF；或向 Edco Ireland 申请授权电子版 |
+| Yudu — `content.yudu.com/.../Artefact/html/index.html` | 匿名 GET 200、S3 + CloudFront 静态外壳，页面内 `login`/`password` 标记 19/5 次，鉴权在前端账号体系 | 出版方主动设置了登录/授权层；不做伪造凭据、复用他人会话、关闭前端鉴权等规避 | 合法账号 / 机构 SSO 登录后在授权范围内使用平台导出；或向出版方申请授权 |
+
+**判断标准**：站点把页图作为无鉴权静态资源公开、且没有任何「限制下载」的表达
+（FlippingBook、`digital.folens.ie` 属于此类）→ 可采集；
+平台明确区分「在线阅读」与「下载」、或设登录 / 订阅门控（Issuu、Yudu）→ 不采集。
+
+拿到**官方渠道的授权 PDF** 之后，本仓库仍可直接用：`shared/verify.py` 逐页真实渲染复验、
+生成 `index.html` 全书总览，产物按 `out-<slug>/` 归档（由 `.gitignore` 忽略，不入库）。
