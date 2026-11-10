@@ -1,7 +1,7 @@
 # Valen-Textbook
 
 三套**独立**的在线翻页电子书采集 agent：自动翻页 → 截图存证 → 保存高清页图 → 组装 PDF。
-已完整采集并复验五本书：
+已完整采集并复验十一本书：
 
 | 出版物 | 引擎 | 模块 |
 |---|---|---|
@@ -9,9 +9,15 @@
 | *Essential Science 2nd Edition*（198 页） | 3D Issue v9.5（digital.folens.ie） | [`folens/`](folens/README.md) |
 | *Tout Va Bien ! 4th Edition*（218 页） | 3D Issue v9.5（digital.folens.ie） | [`folens/`](folens/README.md) |
 | *Real World Geography 2nd Edition*（211 页） | 3D Issue v9.5（digital.folens.ie） | [`folens/`](folens/README.md) |
+| *Starlight 4th Class Combined Reading and Skills Book*（100 页） | 3D Issue **v9.2** | [`folens/`](folens/README.md) |
+| *Starlight 5th Class Combined Reading and Skills Book*（100 页） | 3D Issue **v9.2** | [`folens/`](folens/README.md) |
 | *Touchstones*（288 页） | Issuu（image.isu.pub 页图 + 浏览器截图） | [`issuu/`](issuu/README.md) |
+| *Touchstones Activity Book*（160 页） | Issuu | [`issuu/`](issuu/README.md) |
+| *En Avant! Mon Dossier*（208 页） | Issuu | [`issuu/`](issuu/README.md) |
+| *Maths and Me 4th Class Pupil Book*（170 页） | Issuu | [`issuu/`](issuu/README.md) |
+| *Maths and Me 5th Class Pupil Book*（186 页） | Issuu | [`issuu/`](issuu/README.md) |
 
-> **五份 PDF 都是图像型**：页面由 JPEG 直嵌，矢量文字层已光栅化进页图，因此文字清晰但
+> **十一份 PDF 都是图像型**：页面由 JPEG 直嵌，矢量文字层已光栅化进页图，因此文字清晰但
 > **不可选中 / 不可搜索 / 不可复制**。本项目不叠加 OCR 文本层。
 
 ## 目录结构
@@ -42,8 +48,12 @@ Valen-Textbook/
 ```
 
 产物落在各自的 `out*` 目录：`flippingbook/out/`（609 MB）、
-`folens/out-essential-science-2nd/`（304 MB）、`issuu/out/`（约 200 MB + 288 张页图）、
-`folens/out-tout-va-bien/`（114 MB）、`folens/out-real-world-geography/`（122 MB）。
+`folens/out-essential-science-2nd/`（304 MB）、`folens/out-tout-va-bien/`（114 MB）、
+`folens/out-real-world-geography/`（122 MB）、
+`folens/out-starlight-4th-class/`、`folens/out-starlight-5th-class/`、
+`issuu/out/`（约 200 MB + 288 张页图）、`issuu/out-touchstones-activity-book/`、
+`issuu/out-en-avant-mon-dossier/`、`issuu/out-maths-and-me-4th-class/`、
+`issuu/out-maths-and-me-5th-class/`。
 **每本书必须独立 `--out`** —— PDF 按该目录 `pages/` 全量重组，共用一个 out 会把两本页图混进同一本 PDF。
 这些目录由 `.gitignore` 的 `**/out/` / `**/out-*/` 忽略，**不入库**；代码仓库只提交 agent、脚本与文档。
 
@@ -53,10 +63,10 @@ Valen-Textbook/
 
 | 维度 | `flippingbook/` | `folens/` | `issuu/` |
 |---|---|---|---|
-| 站点 | `online.flippingbook.com/view/<hid>/` | 任意 `.../index.html` 的 3D Issue v9.5 | `issuu.com/<publisher>/docs/<slug>` |
+| 站点 | `online.flippingbook.com/view/<hid>/` | `.../index.html` 的 3D Issue **v9.2 / v9.5** | `issuu.com/<publisher>/docs/<slug>` |
 | 资源分发 | CloudFront 私有分发，需借通配签名 | 站点静态直链，无签名 | `image.isu.pub` 静态直链，无鉴权 |
-| 元数据 | `common/pager.json` | `files/data/bookinfo.json`（`v040` / `v311c`） | 页面内嵌 `publicationId` / `revisionId` / `pageCount` |
-| 页图 | `html5substrates/page%04d_4.jpg` **不含文字** | `large/<N>.jpg` **已是完整页面** | `page_<N>.jpg` **已是完整页面**（2117×2999） |
+| 元数据 | `common/pager.json` | `files/data/bookinfo.json`（`v040` / `v311c`） | 页面内嵌 `publicationId` / `revisionId` / `pageCount`（常为转义 JSON） |
+| 页图 | `html5substrates/page%04d_4.jpg` **不含文字** | `large/<N>.jpg` **已是完整页面** | `page_<N>.jpg` **已是完整页面**（约 2117×2999） |
 | 文字层 | `vector/%04d.svg` **必须合成** | SVG 是文字副本，**叠加会重影** | 无独立文字层，页图已含 |
 | 采集方式 | 浏览器离屏合成 + 元素截图 | Node `fetch` 直采 | **浏览器逐页翻页渲染 + 元素截图** |
 | 页码 | 标签页 ≠ 物理页（offset=14） | 物理序号，无偏移 | 物理序号，无偏移 |
@@ -82,18 +92,25 @@ cd ../folens
 node agent.mjs --pages 1-5 --shots 5          # 试点 + 浏览器翻页存证
 node agent.mjs --resume --delay 800 --shots all
 
-# 引擎 B 换书：指定 URL + 独立 out（三本已验证 URL 见 folens/README.md）
+# 引擎 B 换书：指定 URL + 独立 out（五本已验证 URL 见 folens/README.md）
 URL=https://digital.folens.ie/sites/default/files/bulk_upload/RealWorldGeography2ndEd/RWG2_TB_Flipbook/index.html
 OUT=out-real-world-geography
 node agent.mjs --url "$URL" --out "$OUT" --pages 1-3
 node agent.mjs --url "$URL" --out "$OUT" --resume --delay 800 --shots all
 ./scripts/verify.sh --out "$OUT"
+# v9.2（Starlight）的 bookinfo 标题是占位符 PUBLICATION，必须补 --title / --slug
 
 # 引擎 C（在 issuu/ 下）
 cd ../issuu
-node agent.mjs --pages 1-5                    # 试点
+node agent.mjs --pages 1-5                    # 第一本 Touchstones 试点
 node agent.mjs --resume --delay 800            # 全书 288 页
-# 主站被代理挡住时显式给元数据，见 issuu/README.md
+
+# 引擎 C 换书：主站可达时 --url 自动解析全部元数据，无需手抄 ID
+URL=https://issuu.com/edcoireland/docs/touchstones_activity_book
+OUT=out-touchstones-activity-book
+node agent.mjs --url "$URL" --out "$OUT" --slug touchstones-activity-book --pages 1-3
+node agent.mjs --url "$URL" --out "$OUT" --slug touchstones-activity-book --resume --delay 800
+./scripts/verify.sh --out "$OUT"
 
 # 成品复验（需 python3 + pymupdf）
 python3 -m pip install pymupdf
@@ -102,7 +119,8 @@ cd ../folens && ./scripts/verify.sh
 cd ../issuu && ./scripts/verify.sh
 ```
 
-在仓库根也可以直接复验：`npm run verify:flippingbook` / `npm run verify:folens` / `npm run verify:issuu`。
+在仓库根也可以直接复验：`npm run verify:flippingbook` / `npm run verify:folens` / `npm run verify:issuu`
+（三者分别指向各模块第一本的成品目录；其余书用 `./scripts/verify.sh --out <目录>`）。
 
 ## 命令迁移（旧单入口 → 三个独立入口）
 
@@ -130,7 +148,9 @@ cd ../issuu && ./scripts/verify.sh
 - `shared/verify.py` 的 `--out` 相对当前工作目录，默认 `out`，`--provider` 支持
   `flippingbook` / `3dissue` / `issuu`；
 - `folens/lib/plan.mjs` 的元数据请求带重试（folens CDN 会偶发 S3 `NoSuchKey` 404，重试即 200）；
-- `issuu/lib/plan.mjs` 在元数据齐备时零网络请求，`issuu/lib/capture.mjs` 自动走 `HTTPS_PROXY`。
+- `issuu/lib/plan.mjs` 先还原页面里的转义 JSON 再提取元数据，主站可达时零参数自动解析；
+  主站被代理挡住时可用 `--publication-id / --revision-id / --total / --title` 显式传入（零网络请求），
+  `issuu/lib/capture.mjs` 自动走 `HTTPS_PROXY`，页图尺寸逐页波动时按需扩张视口。
 
 ## 已验证成品
 
@@ -140,15 +160,22 @@ cd ../issuu && ./scripts/verify.sh
 | Essential Science 2nd Ed | `folens/out-essential-science-2nd/essential-science-2nd-edition_p1-p198.pdf` | 198 | 595×842pt / 101.92 MB | 198 张 1918×2713 | PyMuPDF 逐页渲染通过；低密度页 0 |
 | Tout Va Bien ! 4th Ed | `folens/out-tout-va-bien/tout-va-bien-4th-edition_p1-p218.pdf` | 218 | 595×842pt / 113.97 MB | 218 张 1918×2713 | PyMuPDF 逐页渲染通过；仅第 2 页为原书空白 |
 | Real World Geography 2nd Ed | `folens/out-real-world-geography/real-world-geography-2nd-edition_p1-p211.pdf` | 211 | 595×842pt / 122.11 MB | 211 张 1918×2713 | PyMuPDF 逐页渲染通过；低密度页 0 |
+| Starlight 4th Class | `folens/out-starlight-4th-class/starlight-4th-class_p1-p100.pdf` | 100 | 538×736pt / 57.90 MB | 100 张（1959×2680 起，尺寸不统一） | PyMuPDF 逐页渲染通过；仅第 2 页为原书空白；51 张翻页存证 |
+| Starlight 5th Class | `folens/out-starlight-5th-class/starlight-5th-class_p1-p100.pdf` | 100 | 537×736pt / 46.45 MB | 100 张（1119×1533 起，尺寸不统一） | PyMuPDF 逐页渲染通过；仅第 2 页为原书空白；51 张翻页存证 |
 | Touchstones | `issuu/out/touchstones_p1-p288.pdf` | 288 | 595×843pt / 199.76 MB | 288 张 2117×2999 浏览器截图 | PyMuPDF 逐页渲染通过；低密度页 0，零失败页 |
+| Touchstones Activity Book | `issuu/out-touchstones-activity-book/touchstones-activity-book_p1-p160.pdf` | 160 | 595×843pt / 61.42 MB | 160 张 2117×2999 浏览器截图 | PyMuPDF 逐页渲染通过；低密度页 0，零失败页 |
+| En Avant! Mon Dossier | `issuu/out-en-avant-mon-dossier/en-avant-mon-dossier_p1-p208.pdf` | 208 | 595×843pt / 92.75 MB | 208 张 2117×2999 浏览器截图 | PyMuPDF 逐页渲染通过；低密度页 0，零失败页 |
+| Maths and Me 4th Class | `issuu/out-maths-and-me-4th-class/maths-and-me-4th-class_p1-p170.pdf` | 170 | 595×848pt / 108.43 MB | 170 张（2101×2993 起，尺寸波动） | PyMuPDF 逐页渲染通过；低密度页 0，零失败页 |
+| Maths and Me 5th Class | `issuu/out-maths-and-me-5th-class/maths-and-me-5th-class_p1-p186.pdf` | 186 | 595×842pt / 120.61 MB | 186 张（2115×2993 起，尺寸波动） | PyMuPDF 逐页渲染通过；低密度页 0，零失败页 |
 
-五本都附 `pages.json`（manifest）、`quality.json`、`index.html` 全书总览、`preview/render-*.png`
+十一本都附 `pages.json`（manifest）、`quality.json`、`index.html` 全书总览、`preview/render-*.png`
 首/中/末页真实渲染存证。`quality.json` 含 `provider` 字段，标明由哪套引擎产出。
 
 ## 共用件
 
 - `shared/pdf.mjs`：零依赖 JPEG→PDF，解析 SOF 拿像素尺寸，`/DCTDecode` 直嵌原图，手工写 xref。
-  三套引擎只是传入不同的 `pageW/pageH`（来自各自元数据）和 `title`。
+  三套引擎只是传入不同的 `pageW/pageH`（来自各自元数据）和 `title`；每页按自身像素尺寸等比居中适配，
+  所以 v9.2 与 2026 年 Issuu 出版物那种「页图尺寸不统一」也能正常成册。
 - `shared/util.mjs`：CLI 参数、区间解析、节流、带时间戳日志。
 - `shared/verify.py`：从 `pages.json` 推断 `provider` / `offset` / 页码标签，逐页真实渲染并扫描墨迹密度
   （灰度 0.16× 后的像素标准差，空白页/静默丢文字层会塌到 ≈0），再生成懒加载缩略图总览页。
@@ -174,5 +201,5 @@ cd ../issuu && ./scripts/verify.sh
 拿到**官方渠道的授权 PDF** 之后，本仓库仍可直接用：`shared/verify.py` 逐页真实渲染复验、
 生成 `index.html` 全书总览，产物按 `out-<slug>/` 归档（由 `.gitignore` 忽略，不入库）。
 
-> 版权提示：*Touchstones* 的 Issuu 版本页面带 `© The Educational Company of Ireland` 水印，
+> 版权提示：Edco Ireland 的 Issuu 出版物页面带 `© The Educational Company of Ireland` 水印，
 > 版权页声明复制需出版方许可。请仅在已获授权或个人使用范围内保存成品。

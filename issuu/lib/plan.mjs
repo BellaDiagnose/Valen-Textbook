@@ -40,7 +40,9 @@ export async function planIssuu(bookUrl, opts = {}) {
   if (!(opts.publicationId && opts.revisionId && opts.total)) {
     try {
       const html = await getText(bookUrl);
-      const pick = (re) => { const m = html.match(re); return m ? m[1] : null; };
+      // 出版物状态常作为转义字符串内嵌（\"pageCount\":160），先还原引号再提取字段
+      const text = html.replace(/\\"/g, '"');
+      const pick = (re) => { const m = text.match(re); return m ? m[1] : null; };
       meta = {
         title: pick(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)/)
           || pick(/"title":"([^"]+)"/),

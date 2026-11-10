@@ -7,7 +7,7 @@
 依赖 pymupdf：
   python3 -m pip install pymupdf
   python3 ../shared/verify.py --out out          # 在各 agent 目录下执行
-  python3 shared/verify.py --out folens/out      # 或在仓库根执行
+  python3 shared/verify.py --out folens/out-essential-science-2nd  # 或在仓库根执行
 """
 import argparse
 import glob

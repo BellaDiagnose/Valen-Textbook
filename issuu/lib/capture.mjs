@@ -90,7 +90,8 @@ export async function captureBook({
   const browser = await chromium.launch(launch);
   let pageH = plan.pageH;
   try {
-    const ctx = await browser.newContext({ viewport: { width: 2400, height: 3400 }, deviceScaleFactor: 1 });
+    let viewport = { width: 2400, height: 3400 };
+    const ctx = await browser.newContext({ viewport, deviceScaleFactor: 1 });
     const page = await ctx.newPage();
     page.on("requestfailed", (r) => log(`  ⚠ 资源失败: ${r.url().slice(-60)} ${r.failure()?.errorText ?? ""}`));
     await page.setContent(viewerHtml(plan.base), { waitUntil: "domcontentloaded" });
@@ -106,7 +107,8 @@ export async function captureBook({
 
     // 首页真实尺寸决定视口（元素截图必须整体落在视口内）与 PDF MediaBox 比例
     const baseDims = await show(from);
-    await page.setViewportSize({ width: baseDims[0] + 60, height: baseDims[1] + 60 });
+    viewport = { width: baseDims[0] + 60, height: baseDims[1] + 60 };
+    await page.setViewportSize(viewport);
     pageH = Math.round(plan.pageW * baseDims[1] / baseDims[0]);
     log(`✓ 页图 ${baseDims[0]}×${baseDims[1]} → 视口 ${baseDims[0] + 60}×${baseDims[1] + 60} / MediaBox ${plan.pageW}×${pageH}pt`);
 
@@ -118,6 +120,15 @@ export async function captureBook({
       log(`▶ 翻页 → 页 ${n} …`);
       try {
         const dims = await show(n);
+        // 同一出版物不同页可能有几像素裁边差异；元素必须整体落在视口内才会完整截图
+        if (dims[0] + 60 > viewport.width || dims[1] + 60 > viewport.height) {
+          viewport = {
+            width: Math.max(viewport.width, dims[0] + 60),
+            height: Math.max(viewport.height, dims[1] + 60),
+          };
+          await page.setViewportSize(viewport);
+          log(`  ↕ 视口扩至 ${viewport.width}×${viewport.height}`);
+        }
         if (dims[0] !== baseDims[0] || dims[1] !== baseDims[1]) {
           log(`  ⚠ 页图尺寸变化 ${dims[0]}×${dims[1]}`);
         }
