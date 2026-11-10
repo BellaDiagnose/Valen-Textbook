@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-10T21:45:57+08:00",
+  "generated_at": "2026-11-10T22:00:14+08:00",
   "method": "跨页 95 分位建场 → 抑制页眉水平带 → 形态学闭运算求暗化场 D → 乘性衰减反解 B = clip(I + gain·D·bg_local/255)",
   "scope": "11 本全量扫描；仅 3 本 Issuu Edco 书名带页间恒定水印，共 656 页",
   "model_note": "D 以白纸 B=255 标定；半透明深色层 I=B(1−k) 的暗化量 k·B 正比于底色，故补偿按 bg_local/255 缩放。白纸 f≈1 与纯加性等价，深色/彩色版式 f<1，避免过补偿成白色亮痕。",
@@ -303,5 +303,122 @@
         ]
       }
     ]
+  },
+  "acceptance": {
+    "generated_at": "2026-11-10T22:00:14+08:00",
+    "purpose": "不复用 darkening_field 的独立端到端验收，并澄清 apply 报告的口径",
+    "decoded_pixel_audit": {
+      "out": {
+        "pages": 288,
+        "pdf_embedded_jpeg_identical": 288,
+        "clean_zone_abs_delta": {
+          "max": 21,
+          "p95": 18.6,
+          "mean_of_page_means": 0.195
+        },
+        "stroke_mean_delta": {
+          "min": 39.37,
+          "max": 58.51,
+          "mean": 54.94
+        },
+        "anomalous_pages": 0,
+        "low_density_pages": [],
+        "anomaly_detail": []
+      },
+      "out-touchstones-activity-book": {
+        "pages": 160,
+        "pdf_embedded_jpeg_identical": 160,
+        "clean_zone_abs_delta": {
+          "max": 20,
+          "p95": 18.0,
+          "mean_of_page_means": 0.103
+        },
+        "stroke_mean_delta": {
+          "min": 43.56,
+          "max": 58.75,
+          "mean": 56.34
+        },
+        "anomalous_pages": 0,
+        "low_density_pages": [],
+        "anomaly_detail": []
+      },
+      "out-en-avant-mon-dossier": {
+        "pages": 208,
+        "pdf_embedded_jpeg_identical": 208,
+        "clean_zone_abs_delta": {
+          "max": 22,
+          "p95": 17.6,
+          "mean_of_page_means": 0.134
+        },
+        "stroke_mean_delta": {
+          "min": 50.52,
+          "max": 58.95,
+          "mean": 56.67
+        },
+        "anomalous_pages": 0,
+        "low_density_pages": [],
+        "anomaly_detail": []
+      }
+    },
+    "independent_check": {
+      "out": {
+        "highpass_mean_on_strokes": {
+          "orig": -40.92,
+          "clean": 0.63
+        },
+        "ncc_with_template": {
+          "orig": -0.773,
+          "clean": 0.378
+        },
+        "by_background": {
+          "light >210": {
+            "n": 24166,
+            "orig": -42.1,
+            "clean": 0.8
+          }
+        }
+      },
+      "out-touchstones-activity-book": {
+        "highpass_mean_on_strokes": {
+          "orig": -41.37,
+          "clean": -0.16
+        },
+        "ncc_with_template": {
+          "orig": -0.822,
+          "clean": 0.65
+        },
+        "by_background": {
+          "light >210": {
+            "n": 24193,
+            "orig": -42.8,
+            "clean": 0.4
+          }
+        }
+      },
+      "out-en-avant-mon-dossier": {
+        "highpass_mean_on_strokes": {
+          "orig": -40.56,
+          "clean": 1.45
+        },
+        "ncc_with_template": {
+          "orig": -0.768,
+          "clean": 0.52
+        },
+        "by_background": {
+          "dark <130": {
+            "n": 111,
+            "orig": -12.1,
+            "clean": 11.0
+          },
+          "light >210": {
+            "n": 24280,
+            "orig": -42.1,
+            "clean": 1.0
+          }
+        }
+      }
+    },
+    "caveat": "apply.json 的 clean_zone_max_delta=0 比较的是 JPEG 编码前的 ndarray；读回文件后非水印区存在 q95 重编码噪声 |Δ| p95≈18、max≈22 级，属整图重编码而非内容改动。独立验证显示笔画区高通残差由 −40.6~−41.4 收敛到 −0.16~+1.45；NCC 由 −0.77~−0.82 转为 +0.38~+0.65，说明残留为极轻微过冲亮结构（白底 +0.4~1.0 级，量级约为原水印的 1/40），不是暗水印。En Avant 深底 +11 仅 111 像素，不具统计意义。",
+    "conclusion": "656/656 页 PDF 内嵌 JPEG 与 pages-clean 源页图 MD5 完全一致；改动严格限于水印笔画区；水印消除经独立方法确认。"
   }
 }

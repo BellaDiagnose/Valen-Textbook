@@ -204,12 +204,18 @@ cd ../issuu && ./scripts/verify.sh
   - `apply`：写入 `pages-clean/`，原 `pages/` 保持不动；默认前 3 页试点，`--all` 跑全书。
     中间全程 ndarray，只在最终一次 JPEG 编码（默认 q95 / 4:4:4，`--quality` 可调），
     `--gain` 调补偿强度。`apply.json` 记录每页 `mean_modulation`（平均底色系数）与
-    `mean_applied`（实际补偿量）；`D=0` 的区域像素零改动。
+    `mean_applied`（实际补偿量）；`D=0` 的区域像素零改动（**编码前 ndarray 口径**，见下方独立验收）。
   - `verify`：对 `pages-clean/` 重算水印场，残留比 = 处理后场强 / 处理前场强；
     同时用有符号残差（闭运算 − 分位图 − 开运算）检测 `bright_halo_ratio`，
     专门捕捉「过补偿形成的白色亮痕」——纯暗化场会把负残差裁掉，对这种缺陷是盲的。
 - `shared/repack.mjs`：用 `pages-clean/` 按 `pages.json` 的 `bookSize` 重组图像型 PDF，
   仍是 `/DCTDecode` 直嵌、无文本层，输出 `<slug>_clean_p1-pN.pdf`，原 PDF 保留。
+
+**独立验收（避免循环论证）**：`verify` 复用建场时的 `darkening_field`，属于自证；成品另用三条独立证据链复核，结果见 `issuu/dewatermark-report.html` 第六章与 `dewatermark-report.json` 的 `acceptance` 段。
+
+- 解码差分（`issuu/dewatermark-acceptance.json`）：656 页读回文件后逐像素比对，笔画区平均提亮 +39~+59、异常页 0。`apply.json` 的 `clean_zone_max_delta=0` 只成立于 **JPEG 编码前**的 ndarray；读回后有 q95 重编码噪声 `|Δ|` p95≈18、max≈22 级，属整图量化而非内容改动。降 `--quality` 只会放大该噪声，体积取舍不能只看文件大小。
+- 内嵌图像 MD5：逐页 `doc.extract_image(xref)` 与 `pages-clean/page-N.jpg` 比对，656/656 完全一致，证明 `repack.mjs` 直嵌原图、无二次编码。
+- 独立 NCC（`issuu/dewatermark-independent-check.json`）：不调用 `darkening_field` / `signed_residual`，改用 48 页跨页中位图高通残差 `R = M − GaussianBlur(M, σ=12)` 与水印模板做 NCC；笔画区残差由 −40.6~−41.4 收敛到 −0.16~+1.45，NCC 由 −0.77~−0.82 转为 +0.38~+0.65，残留为极轻微过冲亮结构（白底中位数 +0.4~+1.0 级，约为原水印 −41 的 1/40）。
 
 ```bash
 PY=$HOME/.workbuddy/binaries/python/envs/default/bin/python

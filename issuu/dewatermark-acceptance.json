@@ -1,0 +1,53 @@
+{
+  "out": {
+    "pages": 288,
+    "pdf_embedded_jpeg_identical": 288,
+    "clean_zone_abs_delta": {
+      "max": 21,
+      "p95": 18.6,
+      "mean_of_page_means": 0.195
+    },
+    "stroke_mean_delta": {
+      "min": 39.37,
+      "max": 58.51,
+      "mean": 54.94
+    },
+    "anomalous_pages": 0,
+    "low_density_pages": [],
+    "anomaly_detail": []
+  },
+  "out-touchstones-activity-book": {
+    "pages": 160,
+    "pdf_embedded_jpeg_identical": 160,
+    "clean_zone_abs_delta": {
+      "max": 20,
+      "p95": 18.0,
+      "mean_of_page_means": 0.103
+    },
+    "stroke_mean_delta": {
+      "min": 43.56,
+      "max": 58.75,
+      "mean": 56.34
+    },
+    "anomalous_pages": 0,
+    "low_density_pages": [],
+    "anomaly_detail": []
+  },
+  "out-en-avant-mon-dossier": {
+    "pages": 208,
+    "pdf_embedded_jpeg_identical": 208,
+    "clean_zone_abs_delta": {
+      "max": 22,
+      "p95": 17.6,
+      "mean_of_page_means": 0.134
+    },
+    "stroke_mean_delta": {
+      "min": 50.52,
+      "max": 58.95,
+      "mean": 56.67
+    },
+    "anomalous_pages": 0,
+    "low_density_pages": [],
+    "anomaly_detail": []
+  }
+}

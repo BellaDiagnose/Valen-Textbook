@@ -1,0 +1,58 @@
+{
+  "out": {
+    "highpass_mean_on_strokes": {
+      "orig": -40.92,
+      "clean": 0.63
+    },
+    "ncc_with_template": {
+      "orig": -0.773,
+      "clean": 0.378
+    },
+    "by_background": {
+      "light >210": {
+        "n": 24166,
+        "orig": -42.1,
+        "clean": 0.8
+      }
+    }
+  },
+  "out-touchstones-activity-book": {
+    "highpass_mean_on_strokes": {
+      "orig": -41.37,
+      "clean": -0.16
+    },
+    "ncc_with_template": {
+      "orig": -0.822,
+      "clean": 0.65
+    },
+    "by_background": {
+      "light >210": {
+        "n": 24193,
+        "orig": -42.8,
+        "clean": 0.4
+      }
+    }
+  },
+  "out-en-avant-mon-dossier": {
+    "highpass_mean_on_strokes": {
+      "orig": -40.56,
+      "clean": 1.45
+    },
+    "ncc_with_template": {
+      "orig": -0.768,
+      "clean": 0.52
+    },
+    "by_background": {
+      "dark <130": {
+        "n": 111,
+        "orig": -12.1,
+        "clean": 11.0
+      },
+      "light >210": {
+        "n": 24280,
+        "orig": -42.1,
+        "clean": 1.0
+      }
+    }
+  }
+}
