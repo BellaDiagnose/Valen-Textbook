@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # batch-run.sh — Folens / 3D Issue 分批直采驱动
 #
-# 每批单独起一次 agent，PDF 按 out/pages 全量重组；--resume 幂等，整批失败自动重跑一次。
+# 每批单独起一次 agent，PDF 按 out-essential-science-2nd/pages 全量重组；--resume 幂等，整批失败自动重跑一次。
 # 用法（在 folens/ 目录下）：
 #   FROM=1 TO=198 BATCH=20 DELAY=800 GAP=3 ./scripts/batch-run.sh
 # 换书：URL=... OUT=... ./scripts/batch-run.sh
@@ -11,7 +11,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT" || exit 1
 
 NODE=${NODE:-node}
-OUT=${OUT:-out}
+OUT=${OUT:-out-essential-science-2nd}
 URL=${URL:-"https://digital.folens.ie/sites/default/files/bulk_upload/EssentialScience2ndEd/ES_TB_EBOOK/index.html"}
 FROM=${FROM:-1}
 TO=${TO:-198}

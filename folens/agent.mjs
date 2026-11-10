@@ -18,7 +18,7 @@ import { arg, flag, log } from "../shared/util.mjs";
 import { captureBook } from "./lib/capture.mjs";
 
 const BOOK_URL = arg("url", "https://digital.folens.ie/sites/default/files/bulk_upload/EssentialScience2ndEd/ES_TB_EBOOK/index.html");
-const OUT = path.resolve(arg("out", "out"));
+const OUT = path.resolve(arg("out", "out-essential-science-2nd"));
 
 await captureBook({
   bookUrl: BOOK_URL,

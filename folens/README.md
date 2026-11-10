@@ -65,12 +65,12 @@ cd folens
 node agent.mjs --pages 1-5                       # 试点 5 页 + 拼 PDF
 node agent.mjs --pages 1-5 --shots 5             # 附带浏览器翻页存证
 node agent.mjs --resume --delay 800 --shots all  # 全书 198 页（一次直采跑完的配置）
-node agent.mjs --vectors                         # 额外存档 SVG 矢量副本到 out/vectors/
+node agent.mjs --vectors                         # 额外存档 SVG 矢量副本到 out-essential-science-2nd/vectors/
 node agent.mjs --pages 1-5 --no-pdf              # 只存图
 ```
 
 换书用 `--url <.../index.html> --title <书名> --slug <PDF 文件名前缀> --out <产物目录>`；
-`--out` 默认 `out`。`--physical` 与 `--pages` 等价（3D Issue 无页码偏移）。
+`--out` 默认 `out-essential-science-2nd`（第一本的成品目录）。`--physical` 与 `--pages` 等价（3D Issue 无页码偏移）。
 不指定区间时默认采 `1..bookinfo.v040` 全书。
 
 直采链路：`fetch` + 45s 超时 + 2 次重试 + 校验 JPEG magic `FF D8`（防 404 HTML 混进页图），
@@ -79,11 +79,11 @@ node agent.mjs --pages 1-5 --no-pdf              # 只存图
 ### 多本书：每本独立 `--out`
 
 PDF 按 `--out` 目录的 `pages/` 全量重组，**两本书共用一个 out 会把页图混进同一本 PDF**。
-第二本起给独立目录（仓库 `.gitignore` 用 `**/out-*/` 忽略）。已验证的三本：
+三本各用独立目录（仓库 `.gitignore` 用 `**/out-*/` 忽略），第一本也不再用裸 `out/`。已验证的三本：
 
 ```bash
 # 任选一行赋给 URL / OUT（默认第一本；其余两本用注释中的值）
-URL=https://digital.folens.ie/sites/default/files/bulk_upload/EssentialScience2ndEd/ES_TB_EBOOK/index.html   OUT=out
+URL=https://digital.folens.ie/sites/default/files/bulk_upload/EssentialScience2ndEd/ES_TB_EBOOK/index.html   OUT=out-essential-science-2nd
 # URL=https://digital.folens.ie/sites/default/files/bulk_upload/ToutVaBien4thEd/TVB_TB_FLIPBOOK/index.html   OUT=out-tout-va-bien
 # URL=https://digital.folens.ie/sites/default/files/bulk_upload/RealWorldGeography2ndEd/RWG2_TB_Flipbook/index.html  OUT=out-real-world-geography
 
@@ -103,7 +103,7 @@ FROM=1 TO=198 BATCH=20 DELAY=800 GAP=3 ./scripts/batch-run.sh
 ```
 
 每批单独起一次 agent，整批失败冷却 12s 重跑一次（`--resume` 幂等）；环境变量
-`URL / OUT / FROM / TO / BATCH / DELAY / GAP / NODE` 均可覆盖，日志写 `out/batch.log`。
+`URL / OUT / FROM / TO / BATCH / DELAY / GAP / NODE` 均可覆盖，日志写 `out-essential-science-2nd/batch.log`。
 
 ### 浏览器翻页存证（可选）
 
@@ -121,7 +121,7 @@ FROM=1 TO=198 BATCH=20 DELAY=800 GAP=3 ./scripts/batch-run.sh
 ## 产出结构（全书完成态）
 
 ```
-out/                                        # Essential Science 2nd Edition
+out-essential-science-2nd/                  # Essential Science 2nd Edition
 ├── essential-science-2nd-edition_p1-p198.pdf   # 图像型 PDF
 ├── pages.json / quality.json / index.html       # manifest / 质量报告 / 全书总览
 ├── preview/render-001.png …                    # PDF 首/中/末页真实渲染存证
@@ -184,7 +184,7 @@ out-real-world-geography/                   # Real World Geography 2nd Edition�
 
 ```bash
 python3 -m pip install pymupdf
-./scripts/verify.sh                                   # 第一本（--out out）
+./scripts/verify.sh                                   # 第一本（默认 --out out-essential-science-2nd）
 ./scripts/verify.sh --out out-tout-va-bien           # 第二本
 ./scripts/verify.sh --out out-real-world-geography   # 第三本
 ```

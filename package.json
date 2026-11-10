@@ -9,8 +9,8 @@
     "issuu"
   ],
   "scripts": {
-    "verify:flippingbook": "python3 shared/verify.py --out flippingbook/out",
-    "verify:folens": "python3 shared/verify.py --out folens/out",
-    "verify:issuu": "python3 shared/verify.py --out issuu/out"
+    "verify:flippingbook": "${PYTHON:-python3} shared/verify.py --out flippingbook/out",
+    "verify:folens": "${PYTHON:-python3} shared/verify.py --out folens/out-essential-science-2nd",
+    "verify:issuu": "${PYTHON:-python3} shared/verify.py --out issuu/out"
   }
 }

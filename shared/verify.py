@@ -81,7 +81,10 @@ print("低密度页(std<8):", [(r["page"], r["std"]) for r in low])
 marks = sorted({1, (n + 1) // 2, n})
 for p in marks:
     pix = doc[p - 1].get_pixmap(matrix=pymupdf.Matrix(0.8, 0.8), alpha=False)
-    pix.save(os.path.join(PREVIEW, f"render-{p:03d}.png"))
+    # 用 Python 写 PNG 字节而非 pix.save()：MuPDF 保存前会 remove() 目标文件，
+    # 在某些受限环境里覆盖已有存证会报 FzErrorSystem: Operation not permitted。
+    with open(os.path.join(PREVIEW, f"render-{p:03d}.png"), "wb") as f:
+        f.write(pix.tobytes("png"))
 print("渲染存证:", ", ".join(f"preview/render-{p:03d}.png" for p in marks))
 
 # ---------- 3. 质量报告 ----------

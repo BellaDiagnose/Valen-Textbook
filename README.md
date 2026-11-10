@@ -41,10 +41,9 @@ Valen-Textbook/
     └── scripts/              verify.sh
 ```
 
-产物落在各自的 `out/`：`flippingbook/out/`（609 MB）、`folens/out/`（304 MB）、
-`issuu/out/`（约 200 MB + 288 张页图）；
-同引擎的第二、三本分别放 `folens/out-tout-va-bien/`（114 MB）、
-`folens/out-real-world-geography/`（122 MB）。
+产物落在各自的 `out*` 目录：`flippingbook/out/`（609 MB）、
+`folens/out-essential-science-2nd/`（304 MB）、`issuu/out/`（约 200 MB + 288 张页图）、
+`folens/out-tout-va-bien/`（114 MB）、`folens/out-real-world-geography/`（122 MB）。
 **每本书必须独立 `--out`** —— PDF 按该目录 `pages/` 全量重组，共用一个 out 会把两本页图混进同一本 PDF。
 这些目录由 `.gitignore` 的 `**/out/` / `**/out-*/` 忽略，**不入库**；代码仓库只提交 agent、脚本与文档。
 
@@ -107,7 +106,7 @@ cd ../issuu && ./scripts/verify.sh
 
 ## 命令迁移（旧单入口 → 三个独立入口）
 
-原先两套逻辑共用一个 `agent.mjs` 按 URL 自动分派 provider，现已拆成三个目录、各自独立入口。
+原先 FlippingBook 与 3D Issue 两套逻辑共用一个 `agent.mjs` 按 URL 自动分派 provider，现已拆成三个目录、各自独立入口。
 `--provider` 参数与自动分派一并移除 —— **按目录选引擎**，其余参数保持兼容。
 
 | 旧命令（`flippingbook-agent/` 单入口） | 新命令 |
@@ -120,7 +119,7 @@ cd ../issuu && ./scripts/verify.sh
 | `./scripts/batch-3dissue.sh` | `cd folens && FROM=... TO=... ./scripts/batch-run.sh` |
 | `python scripts/verify.py` | `cd flippingbook && ./scripts/verify.sh` |
 | `python scripts/verify.py --out out-folens` | `cd folens && ./scripts/verify.sh` |
-| `out/` / `out-folens/` | `flippingbook/out/` / `folens/out/` |
+| `out/` / `out-folens/` | `flippingbook/out/` / `folens/out-essential-science-2nd/` |
 
 新增的可移植性改动（不再绑定某台机器）：
 
@@ -138,7 +137,7 @@ cd ../issuu && ./scripts/verify.sh
 | 书 | 模块 / 产物 | 页数 | PDF | 页图 | 校验结论 |
 |---|---|---|---|---|---|
 | Linking Thinking 1 | `flippingbook/out/linking-thinking-1_ph1-ph322.pdf` | 322 | 597×842pt / 131.51 MB | 322 张 1454×2050 | PyMuPDF 逐页渲染通过；仅物理页 2 为原书空白 |
-| Essential Science 2nd Ed | `folens/out/essential-science-2nd-edition_p1-p198.pdf` | 198 | 595×842pt / 101.92 MB | 198 张 1918×2713 | PyMuPDF 逐页渲染通过；低密度页 0 |
+| Essential Science 2nd Ed | `folens/out-essential-science-2nd/essential-science-2nd-edition_p1-p198.pdf` | 198 | 595×842pt / 101.92 MB | 198 张 1918×2713 | PyMuPDF 逐页渲染通过；低密度页 0 |
 | Tout Va Bien ! 4th Ed | `folens/out-tout-va-bien/tout-va-bien-4th-edition_p1-p218.pdf` | 218 | 595×842pt / 113.97 MB | 218 张 1918×2713 | PyMuPDF 逐页渲染通过；仅第 2 页为原书空白 |
 | Real World Geography 2nd Ed | `folens/out-real-world-geography/real-world-geography-2nd-edition_p1-p211.pdf` | 211 | 595×842pt / 122.11 MB | 211 张 1918×2713 | PyMuPDF 逐页渲染通过；低密度页 0 |
 | Touchstones | `issuu/out/touchstones_p1-p288.pdf` | 288 | 595×843pt / 199.76 MB | 288 张 2117×2999 浏览器截图 | PyMuPDF 逐页渲染通过；低密度页 0，零失败页 |

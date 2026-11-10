@@ -3,4 +3,4 @@
 set -eu
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
-exec "${PYTHON:-python3}" ../shared/verify.py --out out "$@"
+exec "${PYTHON:-python3}" ../shared/verify.py --out out-essential-science-2nd "$@"
