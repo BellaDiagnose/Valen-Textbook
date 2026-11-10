@@ -182,6 +182,34 @@ cd ../issuu && ./scripts/verify.sh
   老 manifest 无 `provider` 字段时按 `flippingbook` 处理；`--provider` / `--offset` / `--page-label`
   / `--pdf` / `--title` 可显式覆盖。
 
+### 去除页间恒定叠加水印
+
+- `shared/dewatermark.py`：面向**每一页位置与形状都相同**的半透明叠加水印。
+  跨页高分位图把逐页变化的正文投掉、只留恒定水印；形态学闭运算估计无水印背景，
+  两者差值即局部暗化场 `D(x,y)`，按 `B = clip(I + gain·D)` 逐像素补偿。
+  底层像素只是被衰减、并未丢失，所以不做 inpainting、不做生成式补字。
+  - `analyze`：采样 48 页建场，产出 `dewatermark/field.npz`、`field-preview.png`、`analyze.json`。
+    自动闸门用 split-half 相关性、对角带能量、高强度像素占比判断「是否真存在页间恒定水印」；
+    判定为无水印时 `apply` 直接拒绝，避免把页眉页脚版式误当水印抹掉。
+  - `apply`：写入 `pages-clean/`，原 `pages/` 保持不动；默认前 3 页试点，`--all` 跑全书。
+    中间全程 ndarray，只在最终一次 JPEG 编码（默认 q95 / 4:4:4，`--quality` 可调），
+    `--gain` 调补偿强度。非水印区像素零改动。
+  - `verify`：对 `pages-clean/` 重算水印场，残留比 = 处理后场强 / 处理前场强。
+- `shared/repack.mjs`：用 `pages-clean/` 按 `pages.json` 的 `bookSize` 重组图像型 PDF，
+  仍是 `/DCTDecode` 直嵌、无文本层，输出 `<slug>_clean_p1-pN.pdf`，原 PDF 保留。
+
+```bash
+PY=$HOME/.workbuddy/binaries/python/envs/default/bin/python
+$PY shared/dewatermark.py analyze --book issuu/out
+$PY shared/dewatermark.py apply   --book issuu/out --pages 5,144,100   # 看 compare-*.png
+$PY shared/dewatermark.py apply   --book issuu/out --all --no-compare
+$PY shared/dewatermark.py verify  --book issuu/out
+node shared/repack.mjs issuu/out
+```
+
+> 适用范围：自有版权或已获授权的素材、个人使用。水印若构成权利管理信息，
+> 剥离后不得用于再分发；下方版权提示同样适用。
+
 ## 边界
 
 只做图像型 PDF：不做 OCR、不加可搜索文本层、不做压缩分享版。

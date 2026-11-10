@@ -1,0 +1,149 @@
+{
+  "generated_at": "2026-11-10T20:50:42+08:00",
+  "method": "cross-page 95th percentile -> morphological closing -> darkening field D -> B=clip(I+1.15*D)",
+  "scope": "all 11 books scanned; only 3 Issuu Edco titles carry a page-constant overlay",
+  "coverage_scan": [
+    {
+      "book": "flippingbook/out",
+      "pages": 322,
+      "split_half_corr": 0.3947,
+      "high_strength_pct": 0.018,
+      "diagonal_band_energy": 0.9911,
+      "watermark": "none"
+    },
+    {
+      "book": "folens/out-essential-science-2nd",
+      "pages": 198,
+      "split_half_corr": 0.5959,
+      "high_strength_pct": 0.102,
+      "diagonal_band_energy": 0.2718,
+      "watermark": "none"
+    },
+    {
+      "book": "folens/out-real-world-geography",
+      "pages": 211,
+      "split_half_corr": 0.0215,
+      "high_strength_pct": 0.0,
+      "diagonal_band_energy": 0.3409,
+      "watermark": "none"
+    },
+    {
+      "book": "folens/out-starlight-4th-class",
+      "pages": 100,
+      "split_half_corr": 0.2454,
+      "high_strength_pct": 0.014,
+      "diagonal_band_energy": 0.1153,
+      "watermark": "none"
+    },
+    {
+      "book": "folens/out-starlight-5th-class",
+      "pages": 100,
+      "split_half_corr": 0.3402,
+      "high_strength_pct": 0.154,
+      "diagonal_band_energy": 0.167,
+      "watermark": "none"
+    },
+    {
+      "book": "folens/out-tout-va-bien",
+      "pages": 218,
+      "split_half_corr": 0.8727,
+      "high_strength_pct": 0.066,
+      "diagonal_band_energy": 0.41,
+      "watermark": "none"
+    },
+    {
+      "book": "issuu/out",
+      "pages": 288,
+      "split_half_corr": 0.8927,
+      "high_strength_pct": 1.521,
+      "diagonal_band_energy": 1.0,
+      "watermark": "edco-overlay"
+    },
+    {
+      "book": "issuu/out-en-avant-mon-dossier",
+      "pages": 208,
+      "split_half_corr": 0.7437,
+      "high_strength_pct": 1.602,
+      "diagonal_band_energy": 0.9347,
+      "watermark": "edco-overlay"
+    },
+    {
+      "book": "issuu/out-maths-and-me-4th-class",
+      "pages": 170,
+      "split_half_corr": 0.8531,
+      "high_strength_pct": 0.431,
+      "diagonal_band_energy": 0.7725,
+      "watermark": "none"
+    },
+    {
+      "book": "issuu/out-maths-and-me-5th-class",
+      "pages": 186,
+      "split_half_corr": 0.806,
+      "high_strength_pct": 0.589,
+      "diagonal_band_energy": 0.5829,
+      "watermark": "none"
+    },
+    {
+      "book": "issuu/out-touchstones-activity-book",
+      "pages": 160,
+      "split_half_corr": 0.949,
+      "high_strength_pct": 1.521,
+      "diagonal_band_energy": 1.0,
+      "watermark": "edco-overlay"
+    }
+  ],
+  "processed": [
+    {
+      "pdf": "issuu/out-en-avant-mon-dossier/en-avant-mon-dossier_clean_p1-p208.pdf",
+      "pages": 208,
+      "media_box": [
+        595.0,
+        843.0
+      ],
+      "size_mb": 153.87,
+      "pages_without_single_image": 0,
+      "render_failures": 0,
+      "dimension_mismatches": 0,
+      "residual_ratio": 0.0199,
+      "clean_zone_max_delta": 0
+    },
+    {
+      "pdf": "issuu/out-touchstones-activity-book/touchstones-activity-book_clean_p1-p160.pdf",
+      "pages": 160,
+      "media_box": [
+        595.0,
+        843.0
+      ],
+      "size_mb": 101.36,
+      "pages_without_single_image": 0,
+      "render_failures": 0,
+      "dimension_mismatches": 0,
+      "residual_ratio": 0.0002,
+      "clean_zone_max_delta": 0
+    },
+    {
+      "pdf": "issuu/out/touchstones_clean_p1-p288.pdf",
+      "pages": 288,
+      "media_box": [
+        595.0,
+        843.0
+      ],
+      "size_mb": 308.93,
+      "pages_without_single_image": 0,
+      "render_failures": 0,
+      "dimension_mismatches": 0,
+      "residual_ratio": 0.0214,
+      "clean_zone_max_delta": 0
+    }
+  ],
+  "skipped_no_watermark": [
+    "flippingbook/out",
+    "folens/out-essential-science-2nd",
+    "folens/out-real-world-geography",
+    "folens/out-starlight-4th-class",
+    "folens/out-starlight-5th-class",
+    "folens/out-tout-va-bien",
+    "issuu/out-maths-and-me-4th-class",
+    "issuu/out-maths-and-me-5th-class"
+  ]
+}

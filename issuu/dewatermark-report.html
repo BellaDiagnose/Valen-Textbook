@@ -1,0 +1,37 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>页间恒定水印去除 · 全量复验报告</title>
+<style>
+:root{--ink:#1a2230;--muted:#66707e;--line:#e3e8ee;--accent:#185fa5;--hit:#a32d2d}
+*{box-sizing:border-box}body{margin:0;padding:32px 28px 60px;background:#fff;color:var(--ink);
+font:14px/1.6 -apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",sans-serif}
+.wrap{max-width:1080px;margin:0 auto}h1{font-size:22px;font-weight:600;margin:0 0 6px}
+h2{font-size:16px;font-weight:600;margin:34px 0 12px}p.lead{color:var(--muted);margin:0 0 8px}
+code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
+.meta{display:inline-block;background:#f2f6fb;color:var(--accent);border-radius:6px;padding:3px 9px;font-size:12px;margin:6px 8px 0 0}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left}
+th{background:#f7f9fc;color:var(--muted);font-weight:500;font-size:12px}
+tr.hit{background:#fff8f8}td:not(:first-child){white-space:nowrap}
+.tag-hit{color:var(--hit);font-weight:500}.tag-ok{color:var(--muted)}
+.figs{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+figure{margin:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fafbfd}
+figure img{width:100%;display:block}figcaption{padding:8px 10px;font-size:12px;color:var(--muted)}
+.note{background:#f7f9fc;border-left:3px solid var(--accent);padding:10px 14px;color:var(--muted);font-size:13px;margin-top:18px}
+</style></head><body><div class="wrap">
+<h1>页间恒定水印去除 · 全量复验报告</h1>
+<p class="lead">跨页 95 分位建场 → 形态学闭运算求暗化场 D → B = clip(I + 1.15·D)。底层像素只是被衰减，未做 inpainting。</p>
+<span class="meta">生成 2026-11-10T20:50:42+08:00</span><span class="meta">扫描 11 本</span><span class="meta">处理 3 本 / 656 页</span>
+
+<h2>一、覆盖扫描（每本采样 24 页）</h2>
+<table><thead><tr><th>书 / 输出目录</th><th>页数</th><th>split-half corr</th><th>D&gt;30 占比</th><th>对角带能量</th><th>判定</th></tr></thead>
+<tbody><tr class=""><td class=mono>flippingbook/out</td><td>322</td><td>0.395</td><td>0.018%</td><td>0.991</td><td><span class="tag-ok">无水印</span></td></tr><tr class=""><td class=mono>folens/out-essential-science-2nd</td><td>198</td><td>0.596</td><td>0.102%</td><td>0.272</td><td><span class="tag-ok">无水印</span></td></tr><tr class=""><td class=mono>folens/out-real-world-geography</td><td>211</td><td>0.021</td><td>0.000%</td><td>0.341</td><td><span class="tag-ok">无水印</span></td></tr><tr class=""><td class=mono>folens/out-starlight-4th-class</td><td>100</td><td>0.245</td><td>0.014%</td><td>0.115</td><td><span class="tag-ok">无水印</span></td></tr><tr class=""><td class=mono>folens/out-starlight-5th-class</td><td>100</td><td>0.340</td><td>0.154%</td><td>0.167</td><td><span class="tag-ok">无水印</span></td></tr><tr class=""><td class=mono>folens/out-tout-va-bien</td><td>218</td><td>0.873</td><td>0.066%</td><td>0.410</td><td><span class="tag-ok">无水印</span></td></tr><tr class="hit"><td class=mono>issuu/out</td><td>288</td><td>0.893</td><td>1.521%</td><td>1.000</td><td><span class="tag-hit">有 Edco 水印</span></td></tr><tr class="hit"><td class=mono>issuu/out-en-avant-mon-dossier</td><td>208</td><td>0.744</td><td>1.602%</td><td>0.935</td><td><span class="tag-hit">有 Edco 水印</span></td></tr><tr class=""><td class=mono>issuu/out-maths-and-me-4th-class</td><td>170</td><td>0.853</td><td>0.431%</td><td>0.772</td><td><span class="tag-ok">无水印</span></td></tr><tr class=""><td class=mono>issuu/out-maths-and-me-5th-class</td><td>186</td><td>0.806</td><td>0.589%</td><td>0.583</td><td><span class="tag-ok">无水印</span></td></tr><tr class="hit"><td class=mono>issuu/out-touchstones-activity-book</td><td>160</td><td>0.949</td><td>1.521%</td><td>1.000</td><td><span class="tag-hit">有 Edco 水印</span></td></tr></tbody></table>
+<p class="note">判定不能只看相关性：Folens《Tout Va Bien》相关性 0.873 但 D&gt;30 仅 0.066%，属恒定页眉版式；两本 Maths and Me 页图本身无水印。带水印的 3 本 D&gt;30 均 ≥1.5%。</p>
+
+<h2>二、成品全量逐页复验</h2>
+<table><thead><tr><th>clean PDF</th><th>页数</th><th>MediaBox</th><th>体积</th><th>异常 缺图/渲染/尺寸</th><th>水印残留比</th><th>非水印区最大 Δ</th></tr></thead>
+<tbody><tr><td class=mono>en-avant-mon-dossier_clean_p1-p208.pdf</td><td>208</td><td>595×843pt</td><td>153.87 MB</td><td>0 / 0 / 0</td><td>1.99%</td><td>0</td></tr><tr><td class=mono>touchstones-activity-book_clean_p1-p160.pdf</td><td>160</td><td>595×843pt</td><td>101.36 MB</td><td>0 / 0 / 0</td><td>0.02%</td><td>0</td></tr><tr><td class=mono>touchstones_clean_p1-p288.pdf</td><td>288</td><td>595×843pt</td><td>308.93 MB</td><td>0 / 0 / 0</td><td>2.14%</td><td>0</td></tr></tbody></table>
+<p class="note">656 页逐页检查：每页恰好一个图像对象、Width/Height 与 pages-clean/ 源页图一致、低分辨率渲染全部成功。残留比 = 处理后重算水印场 / 处理前场强。</p>
+
+<h2>三、前后对比</h2><div class="figs"><figure><img src="out/dewatermark/compare-0144.png" alt="Touchstones · p144"><figcaption>Touchstones · p144　左：原页 / 右：去水印</figcaption></figure><figure><img src="out-touchstones-activity-book/dewatermark/compare-0050.png" alt="Activity Book · p50"><figcaption>Activity Book · p50　左：原页 / 右：去水印</figcaption></figure><figure><img src="out-en-avant-mon-dossier/dewatermark/compare-0050.png" alt="En Avant · p50"><figcaption>En Avant · p50　左：原页 / 右：去水印</figcaption></figure></div>
+<p class="note">原 pages/ 与原 PDF 全部保留；q95 / 4:4:4 高质量重编码使成品比原页图大 55–66%，可用 --quality 调整。报告数据见同目录 dewatermark-report.json。</p>
+</div></body></html>
