@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-11-10T21:27:59+08:00",
-  "method": "跨页 95 分位建场 → 形态学闭运算求暗化场 D → 乘性衰减反解 B = clip(I + gain·D·bg_local/255)",
+  "generated_at": "2026-11-10T21:45:57+08:00",
+  "method": "跨页 95 分位建场 → 抑制页眉水平带 → 形态学闭运算求暗化场 D → 乘性衰减反解 B = clip(I + gain·D·bg_local/255)",
   "scope": "11 本全量扫描；仅 3 本 Issuu Edco 书名带页间恒定水印，共 656 页",
-  "model_note": "D 以白纸 B=255 标定；半透明深色层 I=B(1-k) 的暗化量 k·B 正比于底色，故补偿按 bg_local/255 缩放。白纸 f≈1 与旧版等价，深色/彩色版式 f<1，避免过补偿成白色亮痕。",
+  "model_note": "D 以白纸 B=255 标定；半透明深色层 I=B(1−k) 的暗化量 k·B 正比于底色，故补偿按 bg_local/255 缩放。白纸 f≈1 与纯加性等价，深色/彩色版式 f<1，避免过补偿成白色亮痕。",
   "coverage_scan": [
     {
       "book": "flippingbook/out",
@@ -101,15 +101,18 @@
         595.0,
         843.0
       ],
-      "size_mb": 153.6,
+      "size_mb": 153.42,
       "pages_without_single_image": 0,
       "render_failures": 0,
       "dimension_mismatches": 0,
-      "residual_ratio": 0.0411,
-      "bright_halo_ratio": 0.0062,
-      "dark_residual_ratio": 0.0592,
-      "mean_modulation": 0.937,
+      "residual_ratio": 0.0004,
+      "bright_halo_ratio": 0.0035,
+      "dark_residual_ratio": 0.0021,
+      "watermark_stroke_pixels": 107999,
+      "mean_modulation": 0.971,
       "clean_zone_max_delta": 0,
+      "split_half_corr": 0.991,
+      "layout_band_energy_removed": 0.1061,
       "apply_pages": 208
     },
     {
@@ -126,8 +129,11 @@
       "residual_ratio": 0.0002,
       "bright_halo_ratio": 0.0,
       "dark_residual_ratio": 0.0,
+      "watermark_stroke_pixels": 106948,
       "mean_modulation": 0.984,
       "clean_zone_max_delta": 0,
+      "split_half_corr": 0.9999,
+      "layout_band_energy_removed": 0.0,
       "apply_pages": 160
     },
     {
@@ -137,15 +143,18 @@
         595.0,
         843.0
       ],
-      "size_mb": 308.16,
+      "size_mb": 306.51,
       "pages_without_single_image": 0,
       "render_failures": 0,
       "dimension_mismatches": 0,
-      "residual_ratio": 0.0282,
-      "bright_halo_ratio": 0.0027,
-      "dark_residual_ratio": 0.0007,
-      "mean_modulation": 0.889,
+      "residual_ratio": 0.0004,
+      "bright_halo_ratio": 0.0,
+      "dark_residual_ratio": 0.0,
+      "watermark_stroke_pixels": 107823,
+      "mean_modulation": 0.95,
       "clean_zone_max_delta": 0,
+      "split_half_corr": 0.9961,
+      "layout_band_energy_removed": 0.1781,
       "apply_pages": 288
     }
   ],
@@ -213,6 +222,85 @@
         "orig": -66.0,
         "old": 0.0,
         "new": -1.0
+      }
+    ],
+    "note": "本文件记录 v1 纯加性 → v2 底色调制的同口径对照；当前成品为 v3（另含页眉水平带抑制），v3 指标见 dewatermark-report.json 的 refinement 段。"
+  },
+  "refinement": {
+    "cause": "固定页眉水平带（y≈74–122，页高 2.5%–4%）被 95 分位建场误纳入 D，刚好躲过 2.5% 边缘屏蔽；在 verify 里伪装成暗水印残留",
+    "fix": "按行能量尖峰 row>3×median(row>0) 检测连续段，仅清零上下 10% 区域内的 <120 行短带",
+    "versions": [
+      {
+        "book": "out-en-avant-mon-dossier",
+        "band_energy_removed": 0.1061,
+        "corr_v2_to_v3": [
+          null,
+          0.991
+        ],
+        "residual_v2_to_v3": [
+          0.0411,
+          0.0004
+        ],
+        "bright_v2_to_v3": [
+          0.0062,
+          0.0035
+        ],
+        "dark_v2_to_v3": [
+          0.0592,
+          0.0021
+        ],
+        "stroke_pixels_v2_to_v3": [
+          null,
+          107999
+        ]
+      },
+      {
+        "book": "out-touchstones-activity-book",
+        "band_energy_removed": 0.0,
+        "corr_v2_to_v3": [
+          null,
+          0.9999
+        ],
+        "residual_v2_to_v3": [
+          0.0002,
+          0.0002
+        ],
+        "bright_v2_to_v3": [
+          0.0,
+          0.0
+        ],
+        "dark_v2_to_v3": [
+          0.0,
+          0.0
+        ],
+        "stroke_pixels_v2_to_v3": [
+          null,
+          106948
+        ]
+      },
+      {
+        "book": "out",
+        "band_energy_removed": 0.1781,
+        "corr_v2_to_v3": [
+          null,
+          0.9961
+        ],
+        "residual_v2_to_v3": [
+          0.0282,
+          0.0004
+        ],
+        "bright_v2_to_v3": [
+          0.0027,
+          0.0
+        ],
+        "dark_v2_to_v3": [
+          0.0007,
+          0.0
+        ],
+        "stroke_pixels_v2_to_v3": [
+          null,
+          107823
+        ]
       }
     ]
   }

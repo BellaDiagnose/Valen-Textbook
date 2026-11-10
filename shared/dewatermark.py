@@ -52,6 +52,9 @@ CEIL = 110.0
 BLUR = 0.6
 GAIN = 1.15
 EDGE_FRAC = 0.025
+BAND_RATIO = 3.0
+BAND_MAX_ROWS = 120
+BAND_EDGE_FRAC = 0.10
 MIN_AGREEMENT = 0.60
 MIN_COVERAGE = 0.008
 MIN_BAND_ENERGY = 0.80
@@ -84,7 +87,39 @@ def load_gray(path: str, size: tuple[int, int]) -> np.ndarray:
     return im
 
 
-def darkening_field(stack: np.ndarray, percentile: float) -> np.ndarray:
+def suppress_horizontal_bands(d: np.ndarray) -> int:
+    """Zero narrow horizontal layout bands that leak into the field.
+
+    A diagonal watermark spreads its energy smoothly across rows.  A fixed
+    header rule or tab instead concentrates it in a short run of rows near the
+    page edge; the 95th-percentile image keeps it, and treating it as watermark
+    tints that header on every page and shows up as a false dark residual.
+    Only short runs inside the outer BAND_EDGE_FRAC are removed, so a dense
+    band of genuine diagonal strokes in the middle of a page is never touched.
+    Returns the number of rows zeroed (mutates d in place).
+    """
+    h = d.shape[0]
+    row = d.sum(axis=1)
+    active = row[row > 0]
+    if active.size < 32:
+        return 0
+    peak = row > float(np.median(active)) * BAND_RATIO
+    edge = max(1, int(h * BAND_EDGE_FRAC))
+    start, removed = None, 0
+    for y in range(h + 1):
+        hot = y < h and peak[y]
+        if hot and start is None:
+            start = y
+        elif not hot and start is not None:
+            if y - start < BAND_MAX_ROWS and (start < edge or y > h - edge):
+                d[start:y, :] = 0.0
+                removed += y - start
+            start = None
+    return removed
+
+
+def darkening_field(stack: np.ndarray, percentile: float,
+                    suppress: bool = True) -> np.ndarray:
     n = stack.shape[0]
     k = min(n - 1, int(round(percentile / 100.0 * (n - 1))))
     part = np.partition(stack, k, axis=0)
@@ -98,6 +133,8 @@ def darkening_field(stack: np.ndarray, percentile: float) -> np.ndarray:
     edge = max(1, int(d.shape[0] * EDGE_FRAC))
     d[:edge, :] = 0.0
     d[-edge:, :] = 0.0
+    if suppress:
+        suppress_horizontal_bands(d)
     return d
 
 
@@ -132,6 +169,8 @@ def analyze(book: str, sample: int, percentile: float) -> None:
     print(f"[analyze] {len(files)} pages, ref={size}, sampled={len(idx)}, stack={stack.nbytes/1e6:.0f} MB")
 
     full = darkening_field(stack, percentile)
+    raw = darkening_field(stack, percentile, suppress=False)
+    band_energy_removed = 1.0 - float(full.sum()) / max(float(raw.sum()), 1e-6)
     half = len(idx) // 2
     d1 = darkening_field(stack[::2], percentile)
     d2 = darkening_field(stack[1::2], percentile)
@@ -163,6 +202,7 @@ def analyze(book: str, sample: int, percentile: float) -> None:
         "darkening_max": round(float(full.max()), 2),
         "darkening_mean_on_strokes": round(float(full[mask].mean()), 2) if mask.any() else 0.0,
         "background_median": round(float(np.median(full)), 3),
+        "layout_band_energy_removed": round(band_energy_removed, 4),
     }
     np.savez_compressed(os.path.join(outdir, "field.npz"),
                         d=full.astype(np.float32), size=np.array(size))

@@ -1,11 +1,11 @@
 <!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>页间恒定水印去除 · 全量复验与亮痕优化报告</title>
+<title>页间恒定水印去除 · 全量复验报告 v3</title>
 <style>
 :root{--ink:#1a2230;--muted:#66707e;--line:#e3e8ee;--accent:#185fa5;--hit:#a32d2d;--good:#1c7a4a;--bad:#b23b3b}
 *{box-sizing:border-box}body{margin:0;padding:32px 28px 60px;background:#fff;color:var(--ink);
 font:14px/1.6 -apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",sans-serif}
-.wrap{max-width:1080px;margin:0 auto}h1{font-size:22px;font-weight:600;margin:0 0 6px}
+.wrap{max-width:1100px;margin:0 auto}h1{font-size:22px;font-weight:600;margin:0 0 6px}
 h2{font-size:16px;font-weight:600;margin:34px 0 12px}p.lead{color:var(--muted);margin:0 0 8px}
 code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
 .meta{display:inline-block;background:#f2f6fb;color:var(--accent);border-radius:6px;padding:3px 9px;font-size:12px;margin:6px 8px 0 0}
@@ -18,40 +18,58 @@ tr.hit{background:#fff8f8}td:not(:first-child){white-space:nowrap}
 figure{margin:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fafbfd}
 figure img{width:100%;display:block}figcaption{padding:8px 10px;font-size:12px;color:var(--muted)}
 .note{background:#f7f9fc;border-left:3px solid var(--accent);padding:10px 14px;color:var(--muted);font-size:13px;margin-top:18px}
+.warn{background:#fff8f0;border-left:3px solid #c07a25;color:#6b4b1a}
 </style></head><body><div class="wrap">
-<h1>页间恒定水印去除 · 全量复验与亮痕优化报告</h1>
-<p class="lead">跨页 95 分位建场 → 形态学闭运算求暗化场 D → <code>B = clip(I + gain·D·bg_local/255)</code>。
-水印是半透明深色层，暗化量正比于底色；按局部底色缩放补偿，避免在非白底版式上过补偿成白色亮痕。底层像素只是被衰减，未做 inpainting。</p>
-<span class="meta">生成 2026-11-10T21:27:59+08:00</span><span class="meta">扫描 11 本</span><span class="meta">处理 3 本 / 656 页</span>
+<h1>页间恒定水印去除 · 全量复验报告 v3</h1>
+<p class="lead">跨页 95 分位建场 → <b>抑制页眉水平带</b> → 形态学闭运算求暗化场 D →
+<code>B = clip(I + gain·D·bg_local/255)</code>。水印是半透明深色层，暗化量正比于底色，
+按局部底色缩放补偿，避免在非白底版式上过补偿成白色亮痕。底层像素只是被衰减，未做 inpainting。</p>
+<span class="meta">生成 2026-11-10T21:45:57+08:00</span><span class="meta">扫描 11 本</span><span class="meta">处理 3 本 / 656 页</span>
+<span class="meta">v1 加性 → v2 底色调制 → v3 场净化</span>
 
 <h2>一、覆盖扫描（每本采样 24 页）</h2>
 <table><thead><tr><th>书 / 输出目录</th><th>页数</th><th>split-half corr</th><th>D&gt;30 占比</th><th>对角带能量</th><th>判定</th></tr></thead>
 <tbody><tr class=""><td class=mono>flippingbook/out</td><td>322</td><td>0.395</td><td>0.018%</td><td>0.991</td><td><span class="tag-ok">无水印</span></td></tr><tr class=""><td class=mono>folens/out-essential-science-2nd</td><td>198</td><td>0.596</td><td>0.102%</td><td>0.272</td><td><span class="tag-ok">无水印</span></td></tr><tr class=""><td class=mono>folens/out-real-world-geography</td><td>211</td><td>0.021</td><td>0.000%</td><td>0.341</td><td><span class="tag-ok">无水印</span></td></tr><tr class=""><td class=mono>folens/out-starlight-4th-class</td><td>100</td><td>0.245</td><td>0.014%</td><td>0.115</td><td><span class="tag-ok">无水印</span></td></tr><tr class=""><td class=mono>folens/out-starlight-5th-class</td><td>100</td><td>0.340</td><td>0.154%</td><td>0.167</td><td><span class="tag-ok">无水印</span></td></tr><tr class=""><td class=mono>folens/out-tout-va-bien</td><td>218</td><td>0.873</td><td>0.066%</td><td>0.410</td><td><span class="tag-ok">无水印</span></td></tr><tr class="hit"><td class=mono>issuu/out</td><td>288</td><td>0.893</td><td>1.521%</td><td>1.000</td><td><span class="tag-hit">有 Edco 水印</span></td></tr><tr class="hit"><td class=mono>issuu/out-en-avant-mon-dossier</td><td>208</td><td>0.744</td><td>1.602%</td><td>0.935</td><td><span class="tag-hit">有 Edco 水印</span></td></tr><tr class=""><td class=mono>issuu/out-maths-and-me-4th-class</td><td>170</td><td>0.853</td><td>0.431%</td><td>0.772</td><td><span class="tag-ok">无水印</span></td></tr><tr class=""><td class=mono>issuu/out-maths-and-me-5th-class</td><td>186</td><td>0.806</td><td>0.589%</td><td>0.583</td><td><span class="tag-ok">无水印</span></td></tr><tr class="hit"><td class=mono>issuu/out-touchstones-activity-book</td><td>160</td><td>0.949</td><td>1.521%</td><td>1.000</td><td><span class="tag-hit">有 Edco 水印</span></td></tr></tbody></table>
 <p class="note">判定不能只看相关性：Folens《Tout Va Bien》相关性 0.873 但 D&gt;30 仅 0.066%，属恒定页眉版式；两本 Maths and Me 页图本身无水印。带水印的 3 本 D&gt;30 均 ≥1.5%。本轮水印有无未变，沿用上轮扫描。</p>
 
-<h2>二、白色亮痕的成因与修复</h2>
-<p>旧版用全局加性补偿 <code>B = clip(I + 1.15·D)</code>，而 D 是在白纸（B=255）上标定的暗化量。
-在深色/彩色版式上，同一水印的真实暗化量小得多，固定补偿会过冲，把灰水印提成更亮的白色水印
-（<code>compare-0050.png</code> 的深蓝标题栏、粉框、灰框）。</p>
-<table><thead><tr><th>En Avant p50 · 局部底色</th><th>笔画像素</th><th>原页残差</th><th>旧加性</th><th>优化版</th></tr></thead>
+<h2>二、v1 → v2：白色亮痕的成因与修复</h2>
+<p>v1 用全局加性 <code>B = clip(I + 1.15·D)</code>，而 D 是在白纸（B=255）上标定的暗化量。
+深色/彩色版式上真实暗化小得多，固定补偿过冲，把灰水印提成更亮的白字。</p>
+<table><thead><tr><th>En Avant p50 · 局部底色</th><th>笔画像素</th><th>原页残差</th><th>v1 加性</th><th>v2 调制</th></tr></thead>
 <tbody><tr><td>深底 &lt;130</td><td>5,698</td><td>-26.0</td><td class=bad>+42.2</td><td class=good>-3.0</td></tr><tr><td>中亮 130-210</td><td>65</td><td>+0.0</td><td class=bad>+61.0</td><td class=good>+47.0</td></tr><tr><td>白纸 &gt;245</td><td>99,813</td><td>-66.0</td><td class=bad>+0.0</td><td class=good>-1.0</td></tr></tbody></table>
-<p class="note">按逐像素局部底色（大核闭运算）分箱。旧版在深底产生 +42 的亮痕，优化版压到 −3；白纸区从 0.0 到 −1.0，基本无回归。
-矩形 ROI 会混合白纸与深色块、稀释差异，按底色分箱才看得准。</p>
-<table style="margin-top:16px"><thead><tr><th>En Avant 全书 48 页 · 有符号残差</th><th>旧加性</th><th>优化版</th></tr></thead>
-<tbody><tr><td>亮痕占比（白色水印）</td><td class=bad>3.66%</td><td class=good>1.01%</td></tr><tr><td>暗痕占比</td><td>0.32%</td><td>6.16%</td></tr><tr><td>笔画区有符号均值</td><td>-2.40</td><td class=good>+0.08</td></tr></tbody></table>
-<p class="note">旧 <code>verify</code> 的暗化场 <code>clip(closed−P,0,·)</code> 会裁掉负残差，对白色亮痕完全失明。
-新版用 <code>S=(closed−P)−(P−opened)</code> 报 <code>bright_halo_ratio</code>。暗痕占比上升是深色版式主动少补的代价，
-表现为低对比度暗痕而非刺眼白痕；笔画区有符号均值从 −2.4 收敛到 +0.08。</p>
-<div class="figs" style="margin-top:16px"><figure><img src="out-en-avant-mon-dossier/dewatermark/final-darkbar-0050.png" alt="深蓝标题栏 · 原页 / 旧版 / 优化版"><figcaption>深蓝标题栏 · 原页 / 旧版 / 优化版</figcaption></figure><figure><img src="out-en-avant-mon-dossier/dewatermark/final-pink-0050.png" alt="粉色框 · 原页 / 旧版 / 优化版"><figcaption>粉色框 · 原页 / 旧版 / 优化版</figcaption></figure></div>
+<table style="margin-top:16px"><thead><tr><th>En Avant 48 页 · 有符号残差</th><th>v1 加性</th><th>v2 调制</th></tr></thead>
+<tbody><tr><td>亮痕占比（白色水印）</td><td class=bad>3.66%</td><td class=good>1.01%</td></tr><tr><td>暗痕占比（当时口径）</td><td>0.32%</td><td>6.16%</td></tr><tr><td>笔画区有符号均值</td><td>-2.40</td><td class=good>+0.08</td></tr></tbody></table>
+<p class="note">旧 <code>verify</code> 的 <code>clip(closed−P,0,·)</code> 裁掉负残差，对白色亮痕完全失明，
+因此补了 <code>S=(closed−P)−(P−opened)</code> 与 <code>bright_halo_ratio</code>。
+<b>更正</b>：v2 报告曾把「暗痕占比 0.32% → 6.16%」解释为「深色版式主动少补的代价」，
+下一节证明它其实来自被误纳入 D 的页眉水平带，不是模型缺陷，已在 v3 消除。</p>
+<div class="figs" style="margin-top:16px"><figure><img src="out-en-avant-mon-dossier/dewatermark/final-darkbar-0050.png" alt="深蓝标题栏 · 原页 / v1 / v2"><figcaption>深蓝标题栏 · 原页 / v1 / v2</figcaption></figure><figure><img src="out-en-avant-mon-dossier/dewatermark/final-pink-0050.png" alt="粉色框 · 原页 / v1 / v2"><figcaption>粉色框 · 原页 / v1 / v2</figcaption></figure></div>
 
-<h2>三、成品全量逐页复验</h2>
-<table><thead><tr><th>clean PDF</th><th>页数</th><th>MediaBox</th><th>体积</th><th>异常 缺图/渲染/尺寸</th><th>暗场残留比</th><th>亮痕比</th><th>平均 f</th><th>非水印区最大 Δ</th></tr></thead>
-<tbody><tr><td class=mono>en-avant-mon-dossier_clean_p1-p208.pdf</td><td>208</td><td>595×843pt</td><td>153.60 MB</td><td>0 / 0 / 0</td><td>4.11%</td><td class=good>0.62%</td><td>0.937</td><td>0</td></tr><tr><td class=mono>touchstones-activity-book_clean_p1-p160.pdf</td><td>160</td><td>595×843pt</td><td>101.29 MB</td><td>0 / 0 / 0</td><td>0.02%</td><td class=good>0.00%</td><td>0.984</td><td>0</td></tr><tr><td class=mono>touchstones_clean_p1-p288.pdf</td><td>288</td><td>595×843pt</td><td>308.16 MB</td><td>0 / 0 / 0</td><td>2.82%</td><td class=good>0.27%</td><td>0.889</td><td>0</td></tr></tbody></table>
+<h2>三、v2 → v3：页眉水平带的发现与抑制</h2>
+<p>把 v2 的暗残差做空间分解：<b>98.1% 的能量落在 D&gt;10 的「水印笔画」内</b>，
+但最大连通域是一条 <code>bbox=(1901,91,216,32)</code> 的<b>水平</b>带，不是斜向笔画。
+行能量显示 y=0–70 与 y=130–260 全为 0，只有 y≈74–122 出现尖峰（峰值 30,273 vs 正常行中位 2,779）——
+这是固定页眉文字，恰好落在 2.5%（74px）边缘屏蔽带之外。</p>
+<p class="note warn"><b>因果</b>：95 分位把这本页眉当成恒定结构保留 → 闭运算填平后进入 D → 逐页被误补偿
+（页眉提亮 3.6–5.0 级）→ <code>verify</code> 用 <code>strokes=D&gt;10</code> 统计时又把它算成「水印笔画上的暗残留」。
+所以 v2 的 4.11% 残留比 / 5.92% 暗痕比是<b>指标口径被污染</b>，不是真实质量代价。</p>
+<p>修复放在建场阶段：<code>row = D.sum(axis=1)</code>，对 <code>row &gt; 3×median(row&gt;0)</code> 的连续段，
+仅当长度 &lt;120 行且位于上下 10% 区域时整行清零。斜向水印行能量平缓，不受影响
+（Activity Book 移除量 0%，两本 Maths and Me 也无命中）。</p>
+<div class="figs" style="margin-top:16px"><figure><img src="out/dewatermark/field-compare.png" alt="v2 / v3 水印场：左图顶部的页眉文字带在 v3 中消失"><figcaption>v2 / v3 水印场：左图顶部的页眉文字带在 v3 中消失</figcaption></figure><figure><img src="out/dewatermark/field-preview.png" alt="v3 最终水印场：只剩斜向字形、背景全黑"><figcaption>v3 最终水印场：只剩斜向字形、背景全黑</figcaption></figure></div>
+<table style="margin-top:16px"><thead><tr><th>书</th><th>移除场能量</th><th>残留比 v2</th><th>残留比 v3</th><th>亮痕比 v2 → v3</th><th>暗痕比 v2</th><th>暗痕比 v3</th></tr></thead>
+<tbody><tr><td class=mono>out-en-avant-mon-dossier</td><td>10.61%</td><td class=bad>4.11%</td><td class=good>0.04%</td><td>0.62% → <b>0.35%</b></td><td class=bad>5.92%</td><td class=good>0.21%</td></tr><tr><td class=mono>out-touchstones-activity-book</td><td>0.00%</td><td class=bad>0.02%</td><td class=good>0.02%</td><td>0.00% → <b>0.00%</b></td><td class=bad>0.00%</td><td class=good>0.00%</td></tr><tr><td class=mono>out</td><td>17.81%</td><td class=bad>2.82%</td><td class=good>0.04%</td><td>0.27% → <b>0.00%</b></td><td class=bad>0.07%</td><td class=good>0.00%</td></tr></tbody></table>
+<p class="note">抑制后三本 <code>field_before_mean</code> 收敛到 52.9 / 53.5 / 53.6，笔画像素数收敛到
+107,823 / 106,948 / 107,999（v2 为 148,952 / 106,948 / 117,146），split-half corr 达 0.9961 / 0.9999 / 0.9910，
+对角带能量 0.995–1.000。En Avant 的 <code>compare-0050.png</code> 字节未变 —— 页眉带在该页是白区，成品零回归。</p>
+
+<h2>四、成品全量逐页复验</h2>
+<table><thead><tr><th>clean PDF</th><th>页数</th><th>MediaBox</th><th>体积</th><th>异常 缺图/渲染/尺寸</th><th>残留比</th><th>亮痕比</th><th>暗痕比</th><th>平均 f</th><th>移除场能量</th><th>非水印区最大 Δ</th></tr></thead>
+<tbody><tr><td class=mono>en-avant-mon-dossier_clean_p1-p208.pdf</td><td>208</td><td>595×843pt</td><td>153.42 MB</td><td>0 / 0 / 0</td><td class=good>0.04%</td><td class=good>0.35%</td><td class=good>0.21%</td><td>0.971</td><td>10.61%</td><td>0</td></tr><tr><td class=mono>touchstones-activity-book_clean_p1-p160.pdf</td><td>160</td><td>595×843pt</td><td>101.29 MB</td><td>0 / 0 / 0</td><td class=good>0.02%</td><td class=good>0.00%</td><td class=good>0.00%</td><td>0.984</td><td>0.00%</td><td>0</td></tr><tr><td class=mono>touchstones_clean_p1-p288.pdf</td><td>288</td><td>595×843pt</td><td>306.51 MB</td><td>0 / 0 / 0</td><td class=good>0.04%</td><td class=good>0.00%</td><td class=good>0.00%</td><td>0.950</td><td>17.81%</td><td>0</td></tr></tbody></table>
 <p class="note">656 页逐页检查：每页恰好一个图像对象、Width/Height 与 pages-clean/ 源页图一致、低分辨率渲染全部成功，非水印区零改动。
-平均 f 越低说明该书深色/彩色版式越多（Touchstones 0.889 &lt; En Avant 0.937 &lt; Activity Book 0.984），
-Activity Book 近乎纯白纸，因此其前后对比图与旧版字节一致。</p>
+平均 f 反映各书彩色版式占比（Touchstones 0.889 &lt; En Avant 0.937 &lt; Activity Book 0.984）。</p>
 
-<h2>四、全书前后对比</h2><div class="figs"><figure><img src="out/dewatermark/compare-0144.png" alt="Touchstones · p144"><figcaption>Touchstones · p144　左：原页 / 右：优化版</figcaption></figure><figure><img src="out-touchstones-activity-book/dewatermark/compare-0050.png" alt="Activity Book · p50"><figcaption>Activity Book · p50　左：原页 / 右：优化版</figcaption></figure><figure><img src="out-en-avant-mon-dossier/dewatermark/compare-0050.png" alt="En Avant · p50"><figcaption>En Avant · p50　左：原页 / 右：优化版</figcaption></figure></div>
+<h2>五、全书前后对比</h2><div class="figs"><figure><img src="out/dewatermark/compare-0144.png" alt="Touchstones · p144"><figcaption>Touchstones · p144　左：原页 / 右：成品</figcaption></figure><figure><img src="out-touchstones-activity-book/dewatermark/compare-0050.png" alt="Activity Book · p50"><figcaption>Activity Book · p50　左：原页 / 右：成品</figcaption></figure><figure><img src="out-en-avant-mon-dossier/dewatermark/compare-0050.png" alt="En Avant · p50"><figcaption>En Avant · p50　左：原页 / 右：成品</figcaption></figure></div>
 <p class="note">原 pages/ 与原 PDF 全部保留；q95 / 4:4:4 高质量重编码使成品比原页图大 55–66%，可用 --quality 调整。
-原始数据见同目录 <code>dewatermark-report.json</code> 与 <code>dewatermark-optimization.json</code>。</p>
+原始数据：<code>dewatermark-report.json</code>（v3）、<code>dewatermark-optimization.json</code>（v1→v2 对照）。</p>
 </div></body></html>

@@ -197,6 +197,10 @@ cd ../issuu && ./scripts/verify.sh
   - `analyze`：采样 48 页建场，产出 `dewatermark/field.npz`、`field-preview.png`、`analyze.json`。
     自动闸门用 split-half 相关性、对角带能量、高强度像素占比判断「是否真存在页间恒定水印」；
     判定为无水印时 `apply` 直接拒绝，避免把页眉页脚版式误当水印抹掉。
+    建场还会**抑制页眉水平带**：这类固定版式在行能量上形成窄尖峰（实测位于页高 2.5%–4%，
+    刚好躲过 2.5% 边缘屏蔽），会占掉 `D` 的 10–18% 能量并被误补偿。按
+    `row > 3×median(row>0)` 找连续段，仅清零上下 10% 区域内的短段（<120 行）；
+    斜向水印行能量平缓，不受影响。`analyze.json` 的 `layout_band_energy_removed` 记录移除比例。
   - `apply`：写入 `pages-clean/`，原 `pages/` 保持不动；默认前 3 页试点，`--all` 跑全书。
     中间全程 ndarray，只在最终一次 JPEG 编码（默认 q95 / 4:4:4，`--quality` 可调），
     `--gain` 调补偿强度。`apply.json` 记录每页 `mean_modulation`（平均底色系数）与
