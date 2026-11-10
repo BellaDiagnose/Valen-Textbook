@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """shared/verify.py — 成品 PDF 的真实渲染验证 + 全页质量扫描 + 总览页生成。
 
-两套 agent 共用：provider / 页码换算从 out/pages.json 单一数据源推断，
-所以两本书都能零参数复验；也可用 --out / --provider 显式指定。
+三套 agent 共用：provider / 页码换算从 out/pages.json 单一数据源推断，
+所以各本书都能零参数复验；也可用 --out / --provider 显式指定。
 
 依赖 pymupdf：
   python3 -m pip install pymupdf
@@ -23,11 +23,11 @@ ap = argparse.ArgumentParser()
 ap.add_argument("--out", default=os.environ.get("OUT_DIR", "out"), help="产物目录（含 pages/ 与 PDF）")
 ap.add_argument("--pdf", default=None, help="PDF 路径；缺省取 --out 下最新 .pdf")
 ap.add_argument("--title", default=None, help="总览页标题；缺省取 pages.json 的 title")
-ap.add_argument("--provider", choices=("flippingbook", "3dissue"), default=None,
+ap.add_argument("--provider", choices=("flippingbook", "3dissue", "issuu"), default=None,
                 help="缺省从 pages.json 推断；老 manifest 无 provider 字段时按 flippingbook 处理")
 ap.add_argument("--offset", type=int, default=None, help="物理页 → 书内页码偏移；缺省从 pages.json 推断")
 ap.add_argument("--page-label", choices=("physical", "sequence"), default=None,
-                help="缺省按 provider 推断：3D Issue=sequence，FlippingBook=physical")
+                help="缺省按 provider 推断：3D Issue / Issuu=sequence，FlippingBook=physical")
 args = ap.parse_args()
 
 OUT = os.path.abspath(args.out)
@@ -47,9 +47,9 @@ if os.path.exists(mpath):
     with open(mpath, encoding="utf-8") as f:
         MANIFEST = json.load(f)
 PROVIDER = args.provider or MANIFEST.get("provider") or "flippingbook"
-IS_3D = PROVIDER == "3dissue"
-OFFSET = args.offset if args.offset is not None else (0 if IS_3D else int(MANIFEST.get("offset") or 0))
-LABEL = args.page_label or ("sequence" if IS_3D else "physical")
+SEQUENCE_PROVIDER = PROVIDER in ("3dissue", "issuu")
+OFFSET = args.offset if args.offset is not None else (0 if SEQUENCE_PROVIDER else int(MANIFEST.get("offset") or 0))
+LABEL = args.page_label or ("sequence" if SEQUENCE_PROVIDER else "physical")
 TITLE = args.title or MANIFEST.get("title") or os.path.splitext(os.path.basename(PDF))[0]
 print(f"provider 推断: {PROVIDER} / offset={OFFSET} / label={LABEL}")
 

@@ -1,0 +1,17 @@
+{
+  "name": "@valen-textbook/issuu",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Issuu 采集：浏览器内逐页翻页渲染 + 元素截图 + JPEG→PDF",
+  "bin": {
+    "issuu-agent": "./agent.mjs"
+  },
+  "scripts": {
+    "capture": "node agent.mjs",
+    "verify": "bash scripts/verify.sh"
+  },
+  "dependencies": {
+    "playwright-core": "^1.65.0"
+  }
+}
