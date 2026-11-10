@@ -1,7 +1,8 @@
 {
-  "generated_at": "2026-11-10T20:50:42+08:00",
-  "method": "cross-page 95th percentile -> morphological closing -> darkening field D -> B=clip(I+1.15*D)",
-  "scope": "all 11 books scanned; only 3 Issuu Edco titles carry a page-constant overlay",
+  "generated_at": "2026-11-10T21:27:59+08:00",
+  "method": "跨页 95 分位建场 → 形态学闭运算求暗化场 D → 乘性衰减反解 B = clip(I + gain·D·bg_local/255)",
+  "scope": "11 本全量扫描；仅 3 本 Issuu Edco 书名带页间恒定水印，共 656 页",
+  "model_note": "D 以白纸 B=255 标定；半透明深色层 I=B(1-k) 的暗化量 k·B 正比于底色，故补偿按 bg_local/255 缩放。白纸 f≈1 与旧版等价，深色/彩色版式 f<1，避免过补偿成白色亮痕。",
   "coverage_scan": [
     {
       "book": "flippingbook/out",
@@ -100,12 +101,16 @@
         595.0,
         843.0
       ],
-      "size_mb": 153.87,
+      "size_mb": 153.6,
       "pages_without_single_image": 0,
       "render_failures": 0,
       "dimension_mismatches": 0,
-      "residual_ratio": 0.0199,
-      "clean_zone_max_delta": 0
+      "residual_ratio": 0.0411,
+      "bright_halo_ratio": 0.0062,
+      "dark_residual_ratio": 0.0592,
+      "mean_modulation": 0.937,
+      "clean_zone_max_delta": 0,
+      "apply_pages": 208
     },
     {
       "pdf": "issuu/out-touchstones-activity-book/touchstones-activity-book_clean_p1-p160.pdf",
@@ -114,12 +119,16 @@
         595.0,
         843.0
       ],
-      "size_mb": 101.36,
+      "size_mb": 101.29,
       "pages_without_single_image": 0,
       "render_failures": 0,
       "dimension_mismatches": 0,
       "residual_ratio": 0.0002,
-      "clean_zone_max_delta": 0
+      "bright_halo_ratio": 0.0,
+      "dark_residual_ratio": 0.0,
+      "mean_modulation": 0.984,
+      "clean_zone_max_delta": 0,
+      "apply_pages": 160
     },
     {
       "pdf": "issuu/out/touchstones_clean_p1-p288.pdf",
@@ -128,12 +137,16 @@
         595.0,
         843.0
       ],
-      "size_mb": 308.93,
+      "size_mb": 308.16,
       "pages_without_single_image": 0,
       "render_failures": 0,
       "dimension_mismatches": 0,
-      "residual_ratio": 0.0214,
-      "clean_zone_max_delta": 0
+      "residual_ratio": 0.0282,
+      "bright_halo_ratio": 0.0027,
+      "dark_residual_ratio": 0.0007,
+      "mean_modulation": 0.889,
+      "clean_zone_max_delta": 0,
+      "apply_pages": 288
     }
   ],
   "skipped_no_watermark": [
@@ -145,5 +158,62 @@
     "folens/out-tout-va-bien",
     "issuu/out-maths-and-me-4th-class",
     "issuu/out-maths-and-me-5th-class"
-  ]
+  ],
+  "optimization": {
+    "signed": {
+      "old": {
+        "bright": 3.66,
+        "dark": 0.32,
+        "mean": -2.4
+      },
+      "new": {
+        "bright": 1.01,
+        "dark": 6.16,
+        "mean": 0.08
+      }
+    },
+    "roi": {
+      "pink-box": {
+        "bg": 237.2,
+        "orig": -59.0,
+        "old": 6.8,
+        "new": 5.7
+      },
+      "grey-box": {
+        "bg": 215.5,
+        "orig": -52.7,
+        "old": 10.6,
+        "new": 9.6
+      },
+      "dark-blue-bar": {
+        "bg": 167.3,
+        "orig": -20.1,
+        "old": 43.0,
+        "new": 27.4
+      }
+    },
+    "by_background": [
+      {
+        "bin": "深底 <130",
+        "n": 5698,
+        "orig": -26.0,
+        "old": 42.2,
+        "new": -3.0
+      },
+      {
+        "bin": "中亮 130-210",
+        "n": 65,
+        "orig": 0.0,
+        "old": 61.0,
+        "new": 47.0
+      },
+      {
+        "bin": "白纸 >245",
+        "n": 99813,
+        "orig": -66.0,
+        "old": 0.0,
+        "new": -1.0
+      }
+    ]
+  }
 }

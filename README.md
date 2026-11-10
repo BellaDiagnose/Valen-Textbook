@@ -186,15 +186,24 @@ cd ../issuu && ./scripts/verify.sh
 
 - `shared/dewatermark.py`：面向**每一页位置与形状都相同**的半透明叠加水印。
   跨页高分位图把逐页变化的正文投掉、只留恒定水印；形态学闭运算估计无水印背景，
-  两者差值即局部暗化场 `D(x,y)`，按 `B = clip(I + gain·D)` 逐像素补偿。
-  底层像素只是被衰减、并未丢失，所以不做 inpainting、不做生成式补字。
+  两者差值即局部暗化场 `D(x,y)`（以白纸 B=255 标定）。
+  水印是半透明深色层，成像为乘性衰减 `I = B·(1−k)`，暗化量 `k·B` 正比于底色；
+  因此补偿必须按底色缩放：`B ≈ clip(I + gain·D·f)`，`f = bg_local / 255`。
+  `bg_local` 由当前页灰度的大核闭运算求得（填掉暗笔画、保留版式底色）。
+  白纸上 `f≈1`，等价于纯加性；深色/彩色版式上 `f<1`，避免把灰水印**过补偿成白色亮痕**
+  （`En Avant` 的深蓝标题栏、粉框、灰框就是这种情形）。
+  底层像素只是被衰减、并未丢失，所以不做 inpainting、不做生成式补字；
+  也不走 `B = I/(1−k)` 的除法反解 —— `k→1` 时会把 JPEG 噪声放大 `1/(1−k)` 倍。
   - `analyze`：采样 48 页建场，产出 `dewatermark/field.npz`、`field-preview.png`、`analyze.json`。
     自动闸门用 split-half 相关性、对角带能量、高强度像素占比判断「是否真存在页间恒定水印」；
     判定为无水印时 `apply` 直接拒绝，避免把页眉页脚版式误当水印抹掉。
   - `apply`：写入 `pages-clean/`，原 `pages/` 保持不动；默认前 3 页试点，`--all` 跑全书。
     中间全程 ndarray，只在最终一次 JPEG 编码（默认 q95 / 4:4:4，`--quality` 可调），
-    `--gain` 调补偿强度。非水印区像素零改动。
-  - `verify`：对 `pages-clean/` 重算水印场，残留比 = 处理后场强 / 处理前场强。
+    `--gain` 调补偿强度。`apply.json` 记录每页 `mean_modulation`（平均底色系数）与
+    `mean_applied`（实际补偿量）；`D=0` 的区域像素零改动。
+  - `verify`：对 `pages-clean/` 重算水印场，残留比 = 处理后场强 / 处理前场强；
+    同时用有符号残差（闭运算 − 分位图 − 开运算）检测 `bright_halo_ratio`，
+    专门捕捉「过补偿形成的白色亮痕」——纯暗化场会把负残差裁掉，对这种缺陷是盲的。
 - `shared/repack.mjs`：用 `pages-clean/` 按 `pages.json` 的 `bookSize` 重组图像型 PDF，
   仍是 `/DCTDecode` 直嵌、无文本层，输出 `<slug>_clean_p1-pN.pdf`，原 PDF 保留。
 

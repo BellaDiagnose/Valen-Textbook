@@ -7,13 +7,23 @@ The watermark is constant across every page while the printed content is not.
 A cross-page high-percentile image therefore isolates the overlay: page content
 is outvoted, the constant watermark survives.  Morphological closing of that
 image estimates the un-watermarked background, and the difference is the local
-darkening field D(x, y).  Restoration compensates additively:
+darkening field D(x, y) calibrated on white paper (B = 255).
 
-    B = clip(I + g * D)
+The overlay behaves as a semi-transparent dark layer, i.e. a multiplicative
+attenuation  I = B * (1 - k).  Its darkening is therefore proportional to the
+underlying paper brightness:  Delta = k * B.  With k = D / 255 the restoration
+is  B = I / (1 - k) ~= I + D * B / 255.  Using the page's own local background
+(estimated by a large morphological closing that fills dark strokes) as a
+first-order estimate of B avoids the division and its noise amplification near
+k -> 1:
 
-D is zero outside watermark strokes, so those pixels are bit-identical apart
-from JPEG requantisation.  No inpainting and no generative fill are used: the
-underlying pixels were never lost, only attenuated.
+    B = clip(I + g * D * f),   f = bg_local / 255
+
+On white paper f = 1 and this reduces to the plain additive form; on tinted or
+dark artwork f < 1 and the compensation scales down instead of overshooting
+into a bright ("white watermark") halo.  D is zero outside watermark strokes,
+so those pixels are untouched.  No inpainting and no generative fill are used:
+the underlying pixels were never lost, only attenuated.
 
 Usage
 -----
@@ -36,6 +46,7 @@ PAGE_GLOB = "page-*.jpg"
 SUBDIR = "dewatermark"
 CLEAN_DIR = "pages-clean"
 KERNEL = 41
+BG_KERNEL = 61
 FLOOR = 1.0
 CEIL = 110.0
 BLUR = 0.6
@@ -88,6 +99,26 @@ def darkening_field(stack: np.ndarray, percentile: float) -> np.ndarray:
     d[:edge, :] = 0.0
     d[-edge:, :] = 0.0
     return d
+
+
+def signed_residual(stack: np.ndarray, percentile: float) -> np.ndarray:
+    """Signed leftover structure: >0 dark strokes, <0 bright (white) halo.
+
+    A plain darkening field clips negative values, so it is blind to the bright
+    halo produced by over-compensating on dark artwork.  Comparing the closing
+    and opening of the cross-page percentile image exposes both directions.
+    """
+    n = stack.shape[0]
+    k = min(n - 1, int(round(percentile / 100.0 * (n - 1))))
+    p = np.partition(stack, k, axis=0)[k].astype(np.float32)
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (KERNEL, KERNEL))
+    closed = cv2.morphologyEx(p, cv2.MORPH_CLOSE, kernel)
+    opened = cv2.morphologyEx(p, cv2.MORPH_OPEN, kernel)
+    s = cv2.GaussianBlur((closed - p) - (p - opened), (0, 0), BLUR)
+    edge = max(1, int(s.shape[0] * EDGE_FRAC))
+    s[:edge, :] = 0.0
+    s[-edge:, :] = 0.0
+    return s
 
 
 def analyze(book: str, sample: int, percentile: float) -> None:
@@ -151,19 +182,28 @@ def restore(path: str, d: np.ndarray, size: tuple[int, int], gain: float,
         raise SystemExit(f"cannot decode {path}")
     h, w = im.shape[:2]
     field = d if (w, h) == size else cv2.resize(d, (w, h), interpolation=cv2.INTER_LINEAR)
-    out = np.clip(im.astype(np.float32) + field[:, :, None] * gain, 0, 255).astype(np.uint8)
+    gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (BG_KERNEL, BG_KERNEL))
+    bg = cv2.morphologyEx(gray, cv2.MORPH_CLOSE, kernel).astype(np.float32)
+    modulation = np.clip(bg / 255.0, 0.0, 1.0)
+    modulation[field < 0.5] = 0.0
+    compensation = field * modulation * gain
+    out = np.clip(im.astype(np.float32) + compensation[:, :, None], 0, 255).astype(np.uint8)
     cv2.imwrite(dst, out, [cv2.IMWRITE_JPEG_QUALITY, quality,
                            cv2.IMWRITE_JPEG_SAMPLING_FACTOR,
                            cv2.IMWRITE_JPEG_SAMPLING_FACTOR_444])
     clean_zone = field < 0.5
     delta = np.abs(out.astype(np.int16) - im.astype(np.int16))
+    strokes = field > 1.0
     return {
         "page": os.path.basename(path),
         "size": [w, h],
-        "changed_ratio": round(float((field > 1.0).mean()), 4),
+        "changed_ratio": round(float(strokes.mean()), 4),
         "clean_zone_max_delta": int(delta[clean_zone].max()) if clean_zone.any() else 0,
         "clean_zone_mean_delta": round(float(delta[clean_zone].mean()), 3) if clean_zone.any() else 0.0,
-        "mean_compensation": round(float(field[field > 1.0].mean()), 2) if (field > 1.0).any() else 0.0,
+        "mean_compensation": round(float(field[strokes].mean()), 2) if strokes.any() else 0.0,
+        "mean_modulation": round(float(modulation[strokes].mean()), 3) if strokes.any() else 0.0,
+        "mean_applied": round(float(compensation[strokes].mean()), 2) if strokes.any() else 0.0,
     }
 
 
@@ -228,6 +268,7 @@ def verify(book: str, sample: int, percentile: float) -> None:
     idx = np.unique(np.linspace(0, len(files) - 1, min(sample, len(files))).astype(int))
     stack = np.stack([load_gray(files[i], size) for i in idx])
     residual = darkening_field(stack, percentile)
+    signed = signed_residual(stack, percentile)
     source = np.load(os.path.join(outdir, "field.npz"))["d"].astype(np.float32)
     strokes = source > 10
     report = {
@@ -238,6 +279,9 @@ def verify(book: str, sample: int, percentile: float) -> None:
         "field_before_mean": round(float(source[strokes].mean()), 2),
         "field_after_mean": round(float(residual[strokes].mean()), 2),
         "residual_ratio": round(float(residual[strokes].mean() / source[strokes].mean()), 4),
+        "signed_mean_on_strokes": round(float(signed[strokes].mean()), 2),
+        "bright_halo_ratio": round(float((signed[strokes] < -8).mean()), 4),
+        "dark_residual_ratio": round(float((signed[strokes] > 8).mean()), 4),
     }
     with open(os.path.join(outdir, "verify.json"), "w") as f:
         json.dump(report, f, indent=2)
